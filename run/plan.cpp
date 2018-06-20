@@ -38,6 +38,20 @@
 
 bool isStateValid(const ob::State *state)
 {
+	const ob::RealVectorStateSpace::StateType *Q = state->as<ob::RealVectorStateSpace::StateType>();
+	Vector q(2);
+	double tol = 1.05;
+
+	for (unsigned i = 0; i < 2; i++) 
+		q[i] = Q->values[i]; 
+	
+	if ( pow(q[0]-obs1[0], 2) + pow(q[1]-obs1[1], 2) < pow(obs1[2]*tol, 2) )
+		return false;
+	if ( pow(q[0]-obs2[0], 2) + pow(q[1]-obs2[1], 2) < pow(obs2[2]*tol, 2) )
+		return false;
+	if ( pow(q[0]-obs3[0], 2) + pow(q[1]-obs3[1], 2) < pow(obs3[2]*tol, 2) )
+		return false;
+
 	return true;
 }
 
@@ -114,50 +128,54 @@ void plan_C::plan(Vector c_start, Vector c_goal, double runtime, plannerType pty
 	// To add a planner, the #include library must be added above
 	ob::PlannerPtr planner = allocatePlanner(si, ptype);
 
-	// // set the problem we are trying to solve for the planner
-	// planner->setProblemDefinition(pdef);
+	// set the problem we are trying to solve for the planner
+	planner->setProblemDefinition(pdef);
 
-	// // perform setup steps for the planner
-	// planner->setup();
+	// perform setup steps for the planner
+	planner->setup();
 
-	// //planner->printSettings(std::cout); // Prints some parameters such as range
-	// //planner->printProperties(std::cout); // Prints some decisions such as multithreading, display approx solutions, and optimize?
+	//planner->printSettings(std::cout); // Prints some parameters such as range
+	//planner->printProperties(std::cout); // Prints some decisions such as multithreading, display approx solutions, and optimize?
 
-	// // print the settings for this space
-	// //si->printSettings(std::cout); // Prints state space settings such as check resolution, segmant count factor and bounds
-	// //si->printProperties(std::cout); // Prints state space properties, average length, dimension ...
+	// print the settings for this space
+	//si->printSettings(std::cout); // Prints state space settings such as check resolution, segmant count factor and bounds
+	//si->printProperties(std::cout); // Prints state space properties, average length, dimension ...
 
-	// // print the problem settings
-	// //pdef->print(std::cout); // Prints problem definition such as start and goal states and optimization objective
+	// print the problem settings
+	//pdef->print(std::cout); // Prints problem definition such as start and goal states and optimization objective
 
-	// // attempt to solve the problem within one second of planning time
-	// clock_t begin = clock();
-	// ob::PlannerStatus solved = planner->solve(runtime);
-	// clock_t end = clock();
-	// cout << "Runtime: " << double(end - begin) / CLOCKS_PER_SEC << endl;
+	// attempt to solve the problem within one second of planning time
+	clock_t begin = clock();
+	ob::PlannerStatus solved = planner->solve(runtime);
+	clock_t end = clock();
+	cout << "Runtime: " << double(end - begin) / CLOCKS_PER_SEC << endl;
 
-	// if (solved) {
-	// 	// get the goal representation from the problem definition (not the same as the goal state)
-	// 	// and inquire about the found path
-	// 	//ob::PathPtr path = pdef->getSolutionPath();
+	if (solved) {
+		// get the goal representation from the problem definition (not the same as the goal state)
+		// and inquire about the found path
+		ob::PathPtr path = pdef->getSolutionPath();
 
-	// 	// print the path to screen
-	// 	//path->print(std::cout);  // Print as vectors
+		// print the path to screen
+		//path->print(std::cout);  // Print as vectors
 
-	// 	// Save path to file
-	// 	// std::ofstream myfile;
-	// 	// myfile.open("path.txt");
-	// 	// og::PathGeometric& pog = static_cast<og::PathGeometric&>(*path); // Transform into geometric path class
-	// 	// pog.printAsMatrix(myfile); // Print as matrix to file
-	// 	// myfile.close();
+		// Save path to file
+		std::ofstream myfile;
+		myfile.open("./path/path.txt");
+		og::PathGeometric& pog = static_cast<og::PathGeometric&>(*path); // Transform into geometric path class
+		pog.printAsMatrix(myfile); // Print as matrix to file
+		myfile << c_goal[0] << " " << c_goal[1] << endl;
+		myfile.close();
 
-	// 	std::cout << "Found solution:" << std::endl;
-	// 	solved_bool = true;
-	// }
-	// else {
-	// 	std::cout << "No solutions found" << std::endl;
-	// 	solved_bool = false;
-	// }
+		std::cout << "Found solution:" << std::endl;
+		solved_bool = true;
+
+		system("cd simulator && ./viz");
+		system("cd ..");
+	}
+	else {
+		std::cout << "No solutions found" << std::endl;
+		solved_bool = false;
+	}
 }
 
 void extract_from_perf_file(ofstream &ToFile) {
@@ -185,7 +203,7 @@ int main(int argn, char ** args) {
 	else if (argn == 2) {
 		runtime = atof(args[1]);
 		ptype = PLANNER_RRT;
-		plannerName = "BiRRT";		
+		plannerName = "RRT";		
 	}
 	else if (argn > 2) {
 		runtime = atof(args[1]);
@@ -193,6 +211,10 @@ int main(int argn, char ** args) {
 		case 1 :
 			ptype = PLANNER_RRT;
 			plannerName = "RRT";
+			break;
+		case 2 :
+			ptype = PLANNER_SST;
+			plannerName = "SST";
 			break;
 		default :
 			cout << "Error: Requested planner not defined.";
@@ -205,12 +227,10 @@ int main(int argn, char ** args) {
 	srand (time(NULL));
 
 	Vector c_start, c_goal;
-	c_start = {-0, 0};
-	c_goal = {1, 1};
-
+	c_start = {-8, -7};
+	c_goal = {7, 7};
 		
 	Plan.plan(c_start, c_goal, runtime, ptype, 0.5);
-
 
 	std::cout << std::endl << std::endl;
 

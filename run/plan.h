@@ -13,11 +13,12 @@
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/config.h>
-// #include <ompl/geometric/planners/rrt/RRT.h>
+#include <ompl/geometric/planners/rrt/RRT.h>
+#include <ompl/geometric/planners/sst/SST.h>
 
 // Modified and custom planners
-#include "../planners/RRT.h"
-#include "../planners/SST.h"
+// #include "../planners/RRT.h"
+// #include "../planners/SST.h"
 
 // Standard libraries
 #include <iostream>
@@ -37,6 +38,10 @@ enum plannerType
 	PLANNER_RRT,
 	PLANNER_SST
 };
+
+Vector obs1 = {0, 0, 2.2};
+Vector obs2 = {-4, 4, 2.2};
+Vector obs3 = {4, -4, 2.2};
 
 bool isStateValid(const ob::State *state);
 
