@@ -1,6 +1,6 @@
 #compiler
 OMPL_DIR = /usr
-INC_CLASSES = ./proj_classes/
+INC_CLASSES = ./systems/
 INC_PLANNERS = ./planners/
 INC_VALIDITY = ./validity_checkers/
 INC_RUN = ./run/
@@ -14,7 +14,7 @@ CXXFLAGS= -I${OMPL_DIR}/local/include -I${OMPL_DIR}/lib/x86_64-linux-gnu -I${INC
 LDFLAGS=  -L${OMPL_DIR}/local/lib -L${OMPL_DIR}/lib/x86_64-linux-gnu -lompl -lboost_filesystem -lboost_system -lboost_serialization -lboost_program_options -Wl,-rpath ${OMPL_DIR}/lib/x86_64-linux-gnu -Wl,-rpath ${OMPL_DIR}/local/lib/ $(GL_LIBS)
 LIBS += -L/usr/lib/x86_64-linux-gnu -lboost_system
 
-CPP_P = ${INC_RUN}plan.cpp #${INC_PLANNERS}RRT.cpp #${INC_PLANNERS}SST.cpp 
+CPP_P = ${INC_RUN}plan.cpp ${INC_CLASSES}sys.cpp ${INC_PLANNERS}SST.cpp  #${INC_PLANNERS}RRT.cpp 
 
 all:
 	$(CXX) ${CPP_P} -o p $(CXXFLAGS) $(LDFLAGS) -std=c++11

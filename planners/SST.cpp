@@ -144,6 +144,24 @@ void ompl::geometric::SST::freeMemory()
     prevSolution_.clear();
 }
 
+// void ompl::geometric::SST::retrieveStateVector(const base::State *state, Vector &q) {
+// 	// cast the abstract state type to the type we expect
+// 	const base::RealVectorStateSpace::StateType *Q = state->as<base::RealVectorStateSpace::StateType>();
+
+// 	for (unsigned i = 0; i < 2; i++) {
+// 		q[i] = Q->values[i]; // Set state of robot1
+// 	}
+// }
+
+// void ompl::geometric::SST::updateStateVector(const base::State *state, Vector q) {
+// 	// cast the abstract state type to the type we expect
+// 	const base::RealVectorStateSpace::StateType *Q = state->as<base::RealVectorStateSpace::StateType>();
+
+// 	for (unsigned i = 0; i < n_; i++) {
+// 		Q->values[i] = q[i];
+// 	}
+// }
+
 ompl::geometric::SST::Motion *ompl::geometric::SST::selectNode(ompl::geometric::SST::Motion *sample)
 {
     std::vector<Motion *> ret;
@@ -199,16 +217,25 @@ ompl::geometric::SST::Witness *ompl::geometric::SST::findClosestWitness(ompl::ge
 
 ompl::base::State *ompl::geometric::SST::monteCarloProp(Motion *m)
 {
-    // sample random point to serve as a direction
+    // Destination state
     base::State *xstate = si_->allocState();
-    sampler_->sampleUniform(xstate);
 
-    // sample length of step from (0 - maxDistance_]
-    double step = rng_.uniformReal(0, maxDistance_);
+    // test1();
+    exit(0);
 
-    // take a step of length step towards the random state
-    double d = si_->distance(m->state_, xstate);
-    si_->getStateSpace()->interpolate(m->state_, xstate, step / d, xstate);
+    // Vector x_ng(2);
+    // retrieveStateVector(m->state_, x_ng);
+
+    // // Sample time step
+    // double dt = rng_.uniformReal(0, maxTimeStep_);
+
+    // // Sample control
+    // Vector u(2);
+    // u[0] = rng_.uniformReal(0, maxVelocity_);
+    // u[1] = rng_.uniformReal(-PI, PI);
+
+    // // Take a step with dt and control u
+    // updateStateVector(xstate, prop(x_ng, u, dt) );
 
     return xstate;
 }

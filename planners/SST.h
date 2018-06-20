@@ -40,6 +40,8 @@
 #include "ompl/geometric/planners/PlannerIncludes.h"
 #include "ompl/datastructures/NearestNeighbors.h"
 
+#include "../systems/sys.h"
+
 namespace ompl
 {
     namespace geometric
@@ -56,7 +58,7 @@ namespace ompl
            Asymptotically Optimal Sampling-based Kinodynamic Planning.
            [[PDF]](http://arxiv.org/abs/1407.2896)
         */
-        class SST : public base::Planner
+        class SST : public base::Planner, public gen_system
         {
         public:
             /** \brief Constructor */
@@ -280,6 +282,21 @@ namespace ompl
 
             /** \brief The optimization objective. */
             base::OptimizationObjectivePtr opt_;
+
+            /** ---- AVISHAI'S ADDITIONS ---- **/
+
+            /** \brief Transform ob::State to vector type **/
+            void retrieveStateVector(const base::State *, Vector &);
+
+            /** \brief Transform type vector type to ob::State **/
+            void updateStateVector(const base::State *, Vector);
+
+            /** \brief The maximum time step to propagate */
+            double maxTimeStep_{0.5};
+
+            /** \brief The maximum velocity to propagate */
+            double maxVelocity_{1};
+           
         };
     }
 }

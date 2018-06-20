@@ -40,6 +40,8 @@
 #include "ompl/geometric/planners/PlannerIncludes.h"
 #include "ompl/datastructures/NearestNeighbors.h"
 
+#include "sys.h"
+
 namespace ompl
 {
     namespace geometric
@@ -62,7 +64,7 @@ namespace ompl
         */
 
         /** \brief Rapidly-exploring Random Trees */
-        class RRT : public base::Planner
+        class RRT : public base::Planner, gen_system
         {
         public:
             /** \brief Constructor */

@@ -59,14 +59,14 @@ ob::PlannerPtr plan_C::allocatePlanner(ob::SpaceInformationPtr si, plannerType p
 {
     switch (p_type)
     {
-        case PLANNER_RRT:
-        {
-            return std::make_shared<og::RRT>(si); //, maxStep);
-            break;
-        }
+        // case PLANNER_RRT:
+        // {
+        //     return std::make_shared<og::RRT>(si); 
+        //     break;
+        // }
 		case PLANNER_SST:
         {
-            return std::make_shared<og::SST>(si); //, maxStep);
+            return std::make_shared<og::SST>(si); 
             break;
         }
         default:
@@ -81,7 +81,7 @@ ob::PlannerPtr plan_C::allocatePlanner(ob::SpaceInformationPtr si, plannerType p
 void plan_C::plan(Vector c_start, Vector c_goal, double runtime, plannerType ptype, double max_step) {
 
 	// construct the state space we are planning inz
-	ob::StateSpacePtr Q(new ob::RealVectorStateSpace(2)); // Angles of Robot 1 & 2 - R^2
+	ob::StateSpacePtr Q(new ob::RealVectorStateSpace(2)); 
 
 	// set the bounds for the Q=R^2 part of 'Cspace'
 	ob::RealVectorBounds Qbounds(2);
@@ -102,7 +102,7 @@ void plan_C::plan(Vector c_start, Vector c_goal, double runtime, plannerType pty
 	// set state validity checking for this space
 	//si->setStateValidityChecker(ob::StateValidityCheckerPtr(new myStateValidityCheckerClass(si)));
 	si->setStateValidityChecker(std::bind(&isStateValid, std::placeholders::_1));
-	si->setStateValidityCheckingResolution(0.1); // 3% ???
+	si->setStateValidityCheckingResolution(0.05);
 
 	// create start state
 	ob::ScopedState<ob::RealVectorStateSpace> start(Cspace);

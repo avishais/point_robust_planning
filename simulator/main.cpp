@@ -7,6 +7,7 @@
 #include <vector>
 #include <unistd.h>
 #include <string.h>
+#include "../systems/point_sys_def.h"
 
 using namespace std;
 
@@ -16,8 +17,11 @@ typedef vector< vector<double> > Matrix;
 const char* robot_pfile = "../path/path.txt";
 Matrix path;
 Vector start(2), goal(2), reached(2);
-Vector obs1(3), obs2(3), obs3(3);
 double fmax_x = 10., fmin_x = -10., fmax_y = 10., fmin_y = -10.;
+
+Vector obs1 = OBS1;
+Vector obs2 = OBS2;
+Vector obs3 = OBS3;
 
 Vector convert2window(Vector v) {
     v[0] = (v[0]-fmin_x)/(fmax_x-fmin_x) * 2. - 1;
@@ -43,11 +47,6 @@ void get_path_data() {
     goal = path[path.size()-1];
     path.pop_back();
     reached =  path[path.size()-1];
-
-    // Obstacles
-    obs1 = {0, 0, 2.2};
-    obs2 = {-4, 4, 2.2};
-    obs3 = {4, -4, 2.2};
 }
 
 void DrawCircle(Vector c, int num_segments) {

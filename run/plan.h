@@ -13,17 +13,20 @@
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/config.h>
-#include <ompl/geometric/planners/rrt/RRT.h>
-#include <ompl/geometric/planners/sst/SST.h>
+// #include <ompl/geometric/planners/rrt/RRT.h>
+// #include <ompl/geometric/planners/sst/SST.h>
 
 // Modified and custom planners
 // #include "../planners/RRT.h"
-// #include "../planners/SST.h"
+#include "../planners/SST.h"
 
 // Standard libraries
 #include <iostream>
 #include <fstream>
 #include <vector>
+
+// Custom
+#include "../systems/point_sys_def.h"
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
@@ -32,16 +35,16 @@ using namespace std;
 typedef vector< double > Vector;
 typedef vector<vector< double >> Matrix;
 
+Vector obs1 = OBS1;
+Vector obs2 = OBS2;
+Vector obs3 = OBS3;
+
 // An enum of available planners
 enum plannerType
 {
 	PLANNER_RRT,
 	PLANNER_SST
 };
-
-Vector obs1 = {0, 0, 2.2};
-Vector obs2 = {-4, 4, 2.2};
-Vector obs3 = {4, -4, 2.2};
 
 bool isStateValid(const ob::State *state);
 
