@@ -16,7 +16,7 @@ LIBS += -L/usr/lib/x86_64-linux-gnu -lboost_system
 
 CPPPQP = ${INC_VALIDITY}collisionDetection.cpp ${INC_VALIDITY}model.cpp
 
-CPP_P = ${INC_RUN}plan.cpp # ${INC_PLANNERS}CBiRRT_PCS.cpp ${INC_PLANNERS}RRT_PCS.cpp ${INC_PLANNERS}SBL_PCS.cpp 
+CPP_P = ${INC_RUN}plan.cpp ${INC_PLANNERS}RRT.cpp ${INC_PLANNERS}SST.cpp 
 
 all:
 	$(CXX) ${CPP_P} -o p $(CXXFLAGS) $(LDFLAGS) -std=c++11

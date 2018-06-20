@@ -13,10 +13,10 @@
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/config.h>
-#include <ompl/geometric/planners/sst/SST.h>
+// #include <ompl/geometric/planners/rrt/RRT.h>
 
 // Modified and custom planners
-// #include "../planners/RRT.h"
+#include "../planners/SST.h"
 
 // Standard libraries
 #include <iostream>
