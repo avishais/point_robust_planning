@@ -47,6 +47,11 @@ ob::PlannerPtr plan_C::allocatePlanner(ob::SpaceInformationPtr si, plannerType p
     {
         case PLANNER_RRT:
         {
+            return std::make_shared<og::RRT>(si); //, maxStep);
+            break;
+        }
+		case PLANNER_SST:
+        {
             return std::make_shared<og::SST>(si); //, maxStep);
             break;
         }

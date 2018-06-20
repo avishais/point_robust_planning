@@ -16,6 +16,7 @@
 // #include <ompl/geometric/planners/rrt/RRT.h>
 
 // Modified and custom planners
+#include "../planners/RRT.h"
 #include "../planners/SST.h"
 
 // Standard libraries
@@ -33,7 +34,8 @@ typedef vector<vector< double >> Matrix;
 // An enum of available planners
 enum plannerType
 {
-	PLANNER_RRT
+	PLANNER_RRT,
+	PLANNER_SST
 };
 
 bool isStateValid(const ob::State *state);

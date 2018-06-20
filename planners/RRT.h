@@ -37,8 +37,8 @@
 #ifndef OMPL_GEOMETRIC_PLANNERS_RRT_RRT_
 #define OMPL_GEOMETRIC_PLANNERS_RRT_RRT_
 
-#include "ompl/datastructures/NearestNeighbors.h"
 #include "ompl/geometric/planners/PlannerIncludes.h"
+#include "ompl/datastructures/NearestNeighbors.h"
 
 namespace ompl
 {
@@ -66,7 +66,7 @@ namespace ompl
         {
         public:
             /** \brief Constructor */
-            RRT(const base::SpaceInformationPtr &si, bool addIntermediateStates = false);
+            RRT(const base::SpaceInformationPtr &si);
 
             ~RRT() override;
 
@@ -94,20 +94,6 @@ namespace ompl
             double getGoalBias() const
             {
                 return goalBias_;
-            }
-
-            /** \brief Return true if the intermediate states generated along motions are to be added to the tree itself
-             */
-            bool getIntermediateStates() const
-            {
-                return addIntermediateStates_;
-            }
-
-            /** \brief Specify whether the intermediate states generated along motions are to be added to the tree
-             * itself */
-            void setIntermediateStates(bool addIntermediateStates)
-            {
-                addIntermediateStates_ = addIntermediateStates;
             }
 
             /** \brief Set the range the planner is supposed to use.
@@ -184,9 +170,6 @@ namespace ompl
 
             /** \brief The maximum length of a motion to be added to a tree */
             double maxDistance_{0.};
-
-            /** \brief Flag indicating whether intermediate states are added to the built tree of motions */
-            bool addIntermediateStates_;
 
             /** \brief The random number generator */
             RNG rng_;
