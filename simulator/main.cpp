@@ -15,7 +15,8 @@ typedef vector< double > Vector;
 typedef vector< vector<double> > Matrix;
 
 const char* robot_pfile = "../path/path.txt";
-Matrix path;
+const char* tree_pfile  = "../path/tree.txt";
+Matrix path, tree;
 Vector start(2), goal(2), reached(2);
 double fmax_x = 10., fmin_x = -10., fmax_y = 10., fmin_y = -10.;
 
@@ -24,8 +25,13 @@ Vector obs2 = OBS2;
 Vector obs3 = OBS3;
 
 Vector convert2window(Vector v) {
-    v[0] = (v[0]-fmin_x)/(fmax_x-fmin_x) * 2. - 1;
-    v[1] = (v[1]-fmin_y)/(fmax_y-fmin_y) * 2. - 1;
+
+    int i = 0;
+    do {
+        v[i]   = (v[i]-fmin_x)/(fmax_x-fmin_x) * 2. - 1;
+        v[i+1] = (v[i+1]-fmin_y)/(fmax_y-fmin_y) * 2. - 1;
+        i += 2;
+    } while (i < v.size());
     return v;
 }
 
@@ -47,6 +53,21 @@ void get_path_data() {
     goal = path[path.size()-1];
     path.pop_back();
     reached =  path[path.size()-1];
+}
+
+void get_tree_data() {
+    ifstream inFile;
+    inFile.open(tree_pfile);
+	if (!inFile) {
+        cout << "\nError opening file.\n";
+        return;
+    }
+	
+    Vector v(4);
+    while (inFile >> v[0] && inFile >> v[1] && inFile >> v[2] && inFile >> v[3]) {
+        v = convert2window(v);
+        tree.push_back(v);
+    }
 }
 
 void DrawCircle(Vector c, int num_segments) {
@@ -75,12 +96,24 @@ void display() {
    glClearColor(1.0f, 1.0f, 1.0f, 0.0f); // Set background color to white and not opaque
    glClear(GL_COLOR_BUFFER_BIT);         // Clear the color buffer (background)
  
+    // Draw tree
+    glLineWidth(1);
+    for (int i = 0; i < tree.size(); i++) {
+        glBegin(GL_LINES);              
+            glColor3f(0.0f, 0.0f, 0.0f); 
+            glVertex2f(tree[i][0], tree[i][1]);    // x, y
+            glVertex2f(tree[i][2], tree[i][3]);
+        glEnd();
+    }
+
+    // Draw path
+    glLineWidth(5);
     for (int i = 0; i < path.size()-1; i++) {
-    glBegin(GL_LINES);              
-        glColor3f(0.0f, 0.0f, 0.0f); // Red
-        glVertex2f(path[i][0], path[i][1]);    // x, y
-        glVertex2f(path[i+1][0], path[i+1][1]);
-    glEnd();
+        glBegin(GL_LINES);              
+            glColor3f(0.0f, 0.0f, 0.0f); 
+            glVertex2f(path[i][0], path[i][1]);    // x, y
+            glVertex2f(path[i+1][0], path[i+1][1]);
+        glEnd();
     }
 
     glPointSize(6);
@@ -107,8 +140,9 @@ void display() {
 int main(int argc, char **argv)
 {
     get_path_data();
-    // for (int i = 0; i < path.size(); i++)
-    //     cout << path[i][0] << " " << path[i][1] << endl;
+    get_tree_data();
+    // for (int i = 0; i < tree.size(); i++)
+    //     cout << tree[i][0] << " " << tree[i][1] << endl;
 
 	glutInit(&argc, argv);
 	// glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB);
@@ -121,7 +155,6 @@ int main(int argc, char **argv)
     glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
     glutDisplayFunc(display); // Register display callback handler for window re-paint
    	glutKeyboardFunc(KeyboardCB);
-
 
 	glutMainLoop();
 

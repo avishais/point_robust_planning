@@ -36,25 +36,6 @@
 
 #include "plan.h"
 
-bool isStateValid(const ob::State *state)
-{
-	const ob::RealVectorStateSpace::StateType *Q = state->as<ob::RealVectorStateSpace::StateType>();
-	Vector q(2);
-	double tol = 1.05;
-
-	for (unsigned i = 0; i < 2; i++) 
-		q[i] = Q->values[i]; 
-	
-	if ( pow(q[0]-obs1[0], 2) + pow(q[1]-obs1[1], 2) < pow(obs1[2]*tol, 2) )
-		return false;
-	if ( pow(q[0]-obs2[0], 2) + pow(q[1]-obs2[1], 2) < pow(obs2[2]*tol, 2) )
-		return false;
-	if ( pow(q[0]-obs3[0], 2) + pow(q[1]-obs3[1], 2) < pow(obs3[2]*tol, 2) )
-		return false;
-
-	return true;
-}
-
 ob::PlannerPtr plan_C::allocatePlanner(ob::SpaceInformationPtr si, plannerType p_type)
 {
     switch (p_type)
@@ -100,8 +81,8 @@ void plan_C::plan(Vector c_start, Vector c_goal, double runtime, plannerType pty
 	ob::SpaceInformationPtr si(new ob::SpaceInformation(Cspace));
 
 	// set state validity checking for this space
-	//si->setStateValidityChecker(ob::StateValidityCheckerPtr(new myStateValidityCheckerClass(si)));
-	si->setStateValidityChecker(std::bind(&isStateValid, std::placeholders::_1));
+	si->setStateValidityChecker(ob::StateValidityCheckerPtr(new ValidityChecker(si)));
+	// si->setStateValidityChecker(std::bind(&isStateValid, std::placeholders::_1));
 	si->setStateValidityCheckingResolution(0.05);
 
 	// create start state
@@ -122,6 +103,9 @@ void plan_C::plan(Vector c_start, Vector c_goal, double runtime, plannerType pty
 	// set the start and goal states
 	pdef->setStartAndGoalStates(start, goal);
 	pdef->print();
+
+	// Set the optimization objective
+	pdef->setOptimizationObjective( ob::OptimizationObjectivePtr(new LengthObjective(si)) );
 
 	maxStep = max_step;
 	// create a planner for the defined space

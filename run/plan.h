@@ -19,14 +19,12 @@
 // Modified and custom planners
 // #include "../planners/RRT.h"
 #include "../planners/SST.h"
+#include "mySetup.h"
 
 // Standard libraries
 #include <iostream>
 #include <fstream>
 #include <vector>
-
-// Custom
-#include "../systems/point_sys_def.h"
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
@@ -34,10 +32,6 @@ using namespace std;
 
 typedef vector< double > Vector;
 typedef vector<vector< double >> Matrix;
-
-Vector obs1 = OBS1;
-Vector obs2 = OBS2;
-Vector obs3 = OBS3;
 
 // An enum of available planners
 enum plannerType

@@ -42,6 +42,7 @@
 #include <ompl/base/spaces/SE3StateSpace.h>
 
 #include "../systems/sys.h"
+#include <fstream>
 
 namespace ompl
 {
@@ -191,7 +192,11 @@ namespace ompl
                 {
                     return parent_;
                 }
+                // Cost from root node to state + heuristic cost from state to goal
                 base::Cost accCost_{0.};
+
+                // Cost from root node to state
+                base::Cost rootToStateCost_{0.};
 
                 /** \brief The state contained by the motion */
                 base::State *state_{nullptr};
@@ -267,10 +272,10 @@ namespace ompl
             double maxDistance_{0.3};
 
             /** \brief The radius for determining the node selected for extension. */
-            double selectionRadius_{3.};
+            double selectionRadius_{2.5};
 
             /** \brief The radius for determining the size of the pruning region. */
-            double pruningRadius_{1.5};
+            double pruningRadius_{1.};
 
             /** \brief The random number generator */
             RNG rng_;
@@ -297,6 +302,8 @@ namespace ompl
 
             /** \brief The maximum velocity to propagate */
             double maxVelocity_;
+
+            void listTree();
            
         };
     }

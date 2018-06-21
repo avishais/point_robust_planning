@@ -227,17 +227,19 @@ ompl::base::State *ompl::geometric::SST::monteCarloProp(Motion *m)
     Vector x_ng(2);
     retrieveStateVector(m->state_, x_ng);
 
-    // Sample time step
-    double dt = rng_.uniformReal(0, maxTimeStep_);
+    do {
+        // Sample time step
+        double dt = rng_.uniformReal(0, maxTimeStep_);
 
-    // Sample control
-    Vector u(2);
-    u[0] = rng_.uniformReal(0, maxVelocity_);
-    u[1] = rng_.uniformReal(-PI, PI);
+        // Sample control
+        Vector u(2);
+        u[0] = rng_.uniformReal(0, maxVelocity_);
+        u[1] = rng_.uniformReal(-PI, PI);
 
-    // Take a step with dt and control u
-    Vector x_new = prop(x_ng, u, dt);
-    updateStateVector(xstate,  x_new);
+        // Take a step with dt and control u
+        Vector x_new = prop(x_ng, u, dt);
+        updateStateVector(xstate,  x_new);
+    } while (!si_->satisfiesBounds(xstate)); // Verify that propagation is within the bounds
 
     return xstate;
 }
@@ -247,6 +249,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
     checkValidity();
     base::Goal *goal = pdef_->getGoal().get();
     auto *goal_s = dynamic_cast<base::GoalSampleableRegion *>(goal);
+    goal_s->setThreshold(maxDistance_); // Set region for the goal
 
     while (const base::State *st = pis_.nextStart())
     {
@@ -254,6 +257,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         si_->copyState(motion->state_, st);
         nn_->add(motion);
         motion->accCost_ = opt_->identityCost();
+        motion->rootToStateCost_ = opt_->identityCost();
         findClosestWitness(motion);
     }
 
@@ -275,8 +279,6 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
     auto *rmotion = new Motion(si_);
     base::State *rstate = rmotion->state_;
     base::State *xstate = si_->allocState();
-    base::State *gstate = si_->allocState();
-    goal_s->sampleGoal(gstate);
 
     unsigned iterations = 0;
 
@@ -313,8 +315,8 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
 
         if (si_->checkMotion(nmotion->state_, rstate))
         {
-            base::Cost incCost = opt_->motionCost(nmotion->state_, rstate);
-            base::Cost cost = opt_->combineCosts(nmotion->accCost_, incCost);
+            base::Cost incCost = opt_->combineCosts( opt_->motionCost(nmotion->state_, rstate), opt_->costToGo(rstate, goal) ); // c + h
+            base::Cost cost = opt_->combineCosts(nmotion->rootToStateCost_, incCost);
             Witness *closestWitness = findClosestWitness(rmotion);
 
             if (closestWitness->rep_ == rmotion || opt_->isCostBetterThan(cost, closestWitness->rep_->accCost_))
@@ -323,6 +325,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                 /* create a motion */
                 auto *motion = new Motion(si_);
                 motion->accCost_ = cost;
+                motion->rootToStateCost_ = opt_->combineCosts( nmotion->rootToStateCost_, opt_->motionCost(nmotion->state_, rstate) );
                 si_->copyState(motion->state_, rstate);
 
                 if (!attemptToReachGoal)
@@ -333,7 +336,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
 
                 nn_->add(motion);
                 double dist = 0.0;
-                bool solv = si_->distance(motion->state_, gstate) < maxDistance_ ? true : false; //goal->isSatisfied(motion->state_, &dist);
+                bool solv = goal->isSatisfied(motion->state_, &dist);
                 if (solv && opt_->isCostBetterThan(motion->accCost_, prevSolutionCost_))
                 {
                     approxdif = dist;
@@ -413,6 +416,8 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
             path->append(prevSolution_[i]);
         solved = true;
         pdef_->addSolutionPath(path, approximate, approxdif, getName());
+
+        listTree();
     }
 
     si_->freeState(xstate);
@@ -453,4 +458,29 @@ void ompl::geometric::SST::getPlannerData(base::PlannerData &data) const
             data.addEdge(base::PlannerDataVertex(allMotion->getParent()->getState()),
                          base::PlannerDataVertex(allMotion->getState()));
     }
+}
+
+void ompl::geometric::SST::listTree() {
+
+    std::ofstream myfile;
+	myfile.open("./path/tree.txt");
+
+    std::vector<Motion*> motions;
+	nn_->list(motions);
+
+    Vector q1(2), q2(2);
+    for (int i = 1; i < motions.size(); i++) {
+        Motion* tmotion = motions[i];
+        if (tmotion->numChildren_ == 0) {
+            while (tmotion->parent_ != nullptr) {
+                retrieveStateVector(tmotion->state_, q1);
+                retrieveStateVector(tmotion->parent_->state_, q2);
+                myfile << q1[0] << " " << q1[1] << " " << q2[0] << " " << q2[1] << endl;
+
+                tmotion = tmotion->parent_;
+            }
+        } 
+    }
+
+    myfile.close();
 }
