@@ -34,7 +34,7 @@
 
 /* Authors: Zakary Littlefield */
 
-#include "ompl/geometric/planners/sst/SST.h"
+// #include "ompl/geometric/planners/sst/SST.h"
 #include "ompl/base/goals/GoalSampleableRegion.h"
 #include "ompl/base/objectives/MinimaxObjective.h"
 #include "ompl/base/objectives/MaximizeMinClearanceObjective.h"
@@ -42,7 +42,11 @@
 #include "ompl/tools/config/SelfConfig.h"
 #include <limits>
 
-ompl::geometric::SST::SST(const base::SpaceInformationPtr &si) : base::Planner(si, "SST")
+#include "SST.h"
+
+ompl::geometric::SST::SST(const base::SpaceInformationPtr &si) : base::Planner(si, "SST"), 
+        maxTimeStep_(0.3), 
+        maxVelocity_(10)
 {
     specs_.approximateSolutions = true;
     specs_.directed = true;
@@ -144,23 +148,23 @@ void ompl::geometric::SST::freeMemory()
     prevSolution_.clear();
 }
 
-// void ompl::geometric::SST::retrieveStateVector(const base::State *state, Vector &q) {
-// 	// cast the abstract state type to the type we expect
-// 	const base::RealVectorStateSpace::StateType *Q = state->as<base::RealVectorStateSpace::StateType>();
+void ompl::geometric::SST::retrieveStateVector(const base::State *state, Vector &q) {
+	// cast the abstract state type to the type we expect
+	const base::RealVectorStateSpace::StateType *Q = state->as<base::RealVectorStateSpace::StateType>();
 
-// 	for (unsigned i = 0; i < 2; i++) {
-// 		q[i] = Q->values[i]; // Set state of robot1
-// 	}
-// }
+	for (unsigned i = 0; i < 2; i++) {
+		q[i] = Q->values[i]; // Set state of robot1
+	}
+}
 
-// void ompl::geometric::SST::updateStateVector(const base::State *state, Vector q) {
-// 	// cast the abstract state type to the type we expect
-// 	const base::RealVectorStateSpace::StateType *Q = state->as<base::RealVectorStateSpace::StateType>();
+void ompl::geometric::SST::updateStateVector(const base::State *state, Vector q) {
+	// cast the abstract state type to the type we expect
+	const base::RealVectorStateSpace::StateType *Q = state->as<base::RealVectorStateSpace::StateType>();
 
-// 	for (unsigned i = 0; i < n_; i++) {
-// 		Q->values[i] = q[i];
-// 	}
-// }
+	for (unsigned i = 0; i < 2; i++) {
+		Q->values[i] = q[i];
+	}
+}
 
 ompl::geometric::SST::Motion *ompl::geometric::SST::selectNode(ompl::geometric::SST::Motion *sample)
 {
@@ -220,22 +224,20 @@ ompl::base::State *ompl::geometric::SST::monteCarloProp(Motion *m)
     // Destination state
     base::State *xstate = si_->allocState();
 
-    // test1();
-    exit(0);
+    Vector x_ng(2);
+    retrieveStateVector(m->state_, x_ng);
 
-    // Vector x_ng(2);
-    // retrieveStateVector(m->state_, x_ng);
+    // Sample time step
+    double dt = rng_.uniformReal(0, maxTimeStep_);
 
-    // // Sample time step
-    // double dt = rng_.uniformReal(0, maxTimeStep_);
+    // Sample control
+    Vector u(2);
+    u[0] = rng_.uniformReal(0, maxVelocity_);
+    u[1] = rng_.uniformReal(-PI, PI);
 
-    // // Sample control
-    // Vector u(2);
-    // u[0] = rng_.uniformReal(0, maxVelocity_);
-    // u[1] = rng_.uniformReal(-PI, PI);
-
-    // // Take a step with dt and control u
-    // updateStateVector(xstate, prop(x_ng, u, dt) );
+    // Take a step with dt and control u
+    Vector x_new = prop(x_ng, u, dt);
+    updateStateVector(xstate,  x_new);
 
     return xstate;
 }
@@ -273,6 +275,8 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
     auto *rmotion = new Motion(si_);
     base::State *rstate = rmotion->state_;
     base::State *xstate = si_->allocState();
+    base::State *gstate = si_->allocState();
+    goal_s->sampleGoal(gstate);
 
     unsigned iterations = 0;
 
@@ -329,7 +333,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
 
                 nn_->add(motion);
                 double dist = 0.0;
-                bool solv = goal->isSatisfied(motion->state_, &dist);
+                bool solv = si_->distance(motion->state_, gstate) < maxDistance_ ? true : false; //goal->isSatisfied(motion->state_, &dist);
                 if (solv && opt_->isCostBetterThan(motion->accCost_, prevSolutionCost_))
                 {
                     approxdif = dist;

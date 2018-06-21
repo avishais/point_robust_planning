@@ -29,7 +29,8 @@ public:
     // Propogate state x with random u and dt
     Vector prop(Vector x, Vector u, double dt);
 
-    void test1();
+    // 
+    void printVector(Vector x);
 };
 
 #endif /*GEN_SYSTEM_*/

@@ -24,7 +24,7 @@ Vector gen_system::prop(Vector x, Vector u, double dt) {
     return x_next;
 }
 
-void gen_system::test1() {
-    cout << "Hellpo\n";
-}
+void gen_system::printVector(Vector x) {
 
+    cout << "[ " << x[0] << ", " << x[1] << " ]" << endl;
+}

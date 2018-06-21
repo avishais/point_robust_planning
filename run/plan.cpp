@@ -197,22 +197,22 @@ int main(int argn, char ** args) {
 
 	if (argn == 1) {
 		runtime = 1; // sec
-		ptype = PLANNER_RRT;
-		plannerName = "RRT";		
+		ptype = PLANNER_SST;
+		plannerName = "SST";		
 	}
 	else if (argn == 2) {
 		runtime = atof(args[1]);
-		ptype = PLANNER_RRT;
-		plannerName = "RRT";		
+		ptype = PLANNER_SST;
+		plannerName = "SST";		
 	}
 	else if (argn > 2) {
 		runtime = atof(args[1]);
 		switch (atoi(args[2])) {
-		case 1 :
+		case 2 :
 			ptype = PLANNER_RRT;
 			plannerName = "RRT";
 			break;
-		case 2 :
+		case 1 :
 			ptype = PLANNER_SST;
 			plannerName = "SST";
 			break;

@@ -39,6 +39,7 @@
 
 #include "ompl/geometric/planners/PlannerIncludes.h"
 #include "ompl/datastructures/NearestNeighbors.h"
+#include <ompl/base/spaces/SE3StateSpace.h>
 
 #include "../systems/sys.h"
 
@@ -58,7 +59,7 @@ namespace ompl
            Asymptotically Optimal Sampling-based Kinodynamic Planning.
            [[PDF]](http://arxiv.org/abs/1407.2896)
         */
-        class SST : public base::Planner, public gen_system
+        class SST : public base::Planner, public gen_system 
         {
         public:
             /** \brief Constructor */
@@ -263,13 +264,13 @@ namespace ompl
             double goalBias_{.05};
 
             /** \brief The maximum length of a motion to be added to a tree */
-            double maxDistance_{5.};
+            double maxDistance_{0.3};
 
             /** \brief The radius for determining the node selected for extension. */
-            double selectionRadius_{5.};
+            double selectionRadius_{3.};
 
             /** \brief The radius for determining the size of the pruning region. */
-            double pruningRadius_{3.};
+            double pruningRadius_{1.5};
 
             /** \brief The random number generator */
             RNG rng_;
@@ -292,10 +293,10 @@ namespace ompl
             void updateStateVector(const base::State *, Vector);
 
             /** \brief The maximum time step to propagate */
-            double maxTimeStep_{0.5};
+            double maxTimeStep_;
 
             /** \brief The maximum velocity to propagate */
-            double maxVelocity_{1};
+            double maxVelocity_;
            
         };
     }
