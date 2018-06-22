@@ -7,7 +7,7 @@
 #include <vector>
 #include <unistd.h>
 #include <string.h>
-#include "../systems/point_sys_def.h"
+#include "../utils/point_sys_def.h"
 
 using namespace std;
 
@@ -147,12 +147,13 @@ int main(int argc, char **argv)
 	glutInit(&argc, argv);
 	// glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB);
 
-	// create the window
+	// set the callbacks
+    glutInitWindowSize(500, 500);   // Set the window's initial width & height
+    glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
+
+    // create the window
 	glutCreateWindow("Robot View");
 
-	// set the callbacks
-    glutInitWindowSize(-10, 10);   // Set the window's initial width & height
-    glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
     glutDisplayFunc(display); // Register display callback handler for window re-paint
    	glutKeyboardFunc(KeyboardCB);
 

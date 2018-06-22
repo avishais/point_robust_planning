@@ -25,7 +25,7 @@ typedef struct  {
 
 } cluster;
 
-class kmeans_clus {
+class kmeans_clustering {
     private:
         vector<Point2f> load_data(Matrix);
 

@@ -1,7 +1,7 @@
 
 #include "clus.h"
 
-vector<Point2f> kmeans_clus::load_data(Matrix M) {
+vector<Point2f> kmeans_clustering::load_data(Matrix M) {
     vector<Point2f> points;
 
     for (int i = 0; i < (int)M.size(); i++)
@@ -10,7 +10,7 @@ vector<Point2f> kmeans_clus::load_data(Matrix M) {
     return points;
 }
 
-int kmeans_clus::elbow(vector<Point2f> points, int num_points) {
+int kmeans_clustering::elbow(vector<Point2f> points, int num_points) {
     Vector sse(num_points);
     Mat labels, centers;
     int attempts=3, flags=cv::KMEANS_RANDOM_CENTERS; // hey, just guessing here
@@ -38,7 +38,7 @@ int kmeans_clus::elbow(vector<Point2f> points, int num_points) {
     return 1;
 }
 
-vector<cluster> kmeans_clus::getClusters(Matrix P) {
+vector<cluster> kmeans_clustering::getClusters(Matrix P) {
     vector<Point2f> points = load_data(P);
     int num_points = P.size();
 
@@ -67,7 +67,7 @@ vector<cluster> kmeans_clus::getClusters(Matrix P) {
     return C;
 }
 
-void kmeans_clus::printClusters(vector<cluster> C) {
+void kmeans_clustering::printClusters(vector<cluster> C) {
 
     cout << "There are " << C.size() << " clusters." << endl;
 
@@ -85,7 +85,7 @@ void kmeans_clus::printClusters(vector<cluster> C) {
 
 //     Matrix M = {{10.0, 10.0},{11.0, 9.0},{1.0, 1.0},{5.0, 4.0},{5.0, 5.0},{5.0, 6.0},{2.0, 1.0},{2.0, 2.0},{4.0, 5.0},{6.0, 5.0},{9.0, 9.0},{10.0, 9.0},{3,3},{4,3},{3.5,4}};
 
-//     kmeans_clus KM;
+//     kmeans_clustering KM;
 
 //     vector<cluster> C = KM.getClusters(M);
 
