@@ -17,9 +17,8 @@
 // #include <ompl/geometric/planners/sst/SST.h>
 
 // Modified and custom planners
-// #include "../planners/RRT.h"
-#include "../planners/SST.h"
-#include "mySetup.h"
+// #include "RRT.h"
+#include "SST.h"
 
 // Standard libraries
 #include <iostream>

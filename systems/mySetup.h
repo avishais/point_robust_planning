@@ -17,14 +17,15 @@
 #include <vector>
 
 // Environment parameters
-#include "../systems/point_sys_def.h"
+#include "point_sys_def.h"
+
+using namespace std;
 
 namespace ob = ompl::base;
 using namespace ob;
 
-vector<double> obs1 = OBS1;
-vector<double> obs2 = OBS2;
-vector<double> obs3 = OBS3;
+typedef vector< double > Vector;
+typedef vector<vector< double >> Matrix;
 
 /** Defines an optimization objective which attempts to minimize the length of the path in the R^2 X S configuration space
  *
@@ -62,7 +63,14 @@ class ValidityChecker : public ob::StateValidityChecker
 {
 public:
     ValidityChecker(const ob::SpaceInformationPtr& si) :
-        ob::StateValidityChecker(si) {}
+        ob::StateValidityChecker(si) {
+            obs1.resize(3);
+            obs1 = OBS1;
+            obs2.resize(3);
+            obs2 = OBS2;
+            obs3.resize(3);
+            obs3 = OBS3;
+        }
     // Returns whether the given state's position overlaps the
     // circular obstacle
     bool isValid(const ob::State* state) const
@@ -80,6 +88,46 @@ public:
             return true;
     }
 
+    Vector obs1, obs2, obs3;
+};
+
+
+/** Define dynamical system and propagation **/
+class gen_system
+{
+private:
+
+    // This is the f(.) function in \dot{x}=f(x,u)
+    // Implemented for a 2D-state point
+    Vector f_func(Vector x, Vector u) {
+        Vector f(2);
+
+        f[0] = u[0] * cos(u[1]);
+        f[1] = u[0] * sin(u[1]);
+
+        return f;
+    }
+
+public:
+    // Constructor
+    gen_system() {};
+
+    // Propogate state x with random u and dt
+    Vector prop(Vector x, Vector u, double dt) {
+        Vector x_next(2);
+
+        Vector f = f_func(x, u);
+
+        x_next[0] = x[0] + f[0] * dt;
+        x_next[1] = x[1] + f[1] * dt;
+
+        return x_next;
+    }
+
+    // Print vector type
+    void printVector(Vector x) {
+        cout << "[ " << x[0] << ", " << x[1] << " ]" << endl;
+    }
 };
 
 #endif

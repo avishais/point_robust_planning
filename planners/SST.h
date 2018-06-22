@@ -41,7 +41,7 @@
 #include "ompl/datastructures/NearestNeighbors.h"
 #include <ompl/base/spaces/SE3StateSpace.h>
 
-#include "../systems/sys.h"
+#include "mySetup.h"
 #include <fstream>
 
 namespace ompl
