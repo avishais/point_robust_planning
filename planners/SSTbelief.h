@@ -216,6 +216,12 @@ namespace ompl
 
                 /** Probability to reach the state from the root **/
                 double accProb_{0.};
+
+                /** Standard deviation of particles forming the state node (mean) */
+                Vector stddev{{.1, .1}};
+
+                /** Number of particles to propagate */
+                unsigned nParticles_{10};
             };
 
             class Witness : public Motion
@@ -313,10 +319,15 @@ namespace ompl
             void listTree();
 
             /** Number of particles **/
-            int numParticles_{100};
+            // int numParticles_{100};
+
+            /** Sample particles for a motion with normal distribution **/
+            void sampleParticles4Motion(Motion *);
+
 
             /** Propagate a set of particles based on the uncertainty in the current state **/
-            ompl::base::State *ParticlesProp(Motion *m);
+            Motion *ParticlesProp(Motion *);
+
            
         };
     }

@@ -16,7 +16,9 @@ typedef vector< vector<double> > Matrix;
 
 const char* robot_pfile = "../path/path.txt";
 const char* tree_pfile  = "../path/tree.txt";
-Matrix path, tree;
+const char* particles_pfile  = "../path/particles.txt";
+const char* motions_pfile  = "../path/motions.txt";
+Matrix path, tree, particles, motions;
 Vector start(2), goal(2), reached(2);
 double fmax_x = 10., fmin_x = -10., fmax_y = 10., fmin_y = -10.;
 
@@ -33,6 +35,11 @@ Vector convert2window(Vector v) {
         i += 2;
     } while (i < v.size());
     return v;
+}
+
+void printMatrix(Matrix M) {
+    for (int i = 0; i < M.size(); i++)
+            cout << M[i][0] << " " << M[i][1] << endl;
 }
 
 void get_path_data() {
@@ -70,6 +77,37 @@ void get_tree_data() {
     }
 }
 
+void get_particles_data() {
+    ifstream inFile;
+    inFile.open(particles_pfile);
+	if (!inFile) {
+        cout << "\nError opening file.\n";
+        return;
+    }
+	
+    Vector v(2);
+    while (inFile >> v[0] && inFile >> v[1]) {
+        v = convert2window(v);
+        particles.push_back(v);
+    }
+}
+
+void get_motions_data() {
+    ifstream inFile;
+    inFile.open(motions_pfile);
+	if (!inFile) {
+        cout << "\nError opening file.\n";
+        return;
+    }
+	
+    Vector v(2);
+    while (inFile >> v[0] && inFile >> v[1]) {
+        v = convert2window(v);
+        motions.push_back(v);
+    }
+
+}
+
 void DrawCircle(Vector c, int num_segments) {
     glBegin(GL_POLYGON);
     glColor3f(0.3f, 0.2f, 0.0f); // Red
@@ -96,6 +134,10 @@ void display() {
    glClearColor(1.0f, 1.0f, 1.0f, 0.0f); // Set background color to white and not opaque
    glClear(GL_COLOR_BUFFER_BIT);         // Clear the color buffer (background)
  
+    DrawCircle(obs1, 20);
+    DrawCircle(obs2, 20);
+    DrawCircle(obs3, 20);
+
     // Draw tree
     glLineWidth(1);
     for (int i = 0; i < tree.size(); i++) {
@@ -103,6 +145,16 @@ void display() {
             glColor3f(0.0f, 0.0f, 0.0f); 
             glVertex2f(tree[i][0], tree[i][1]);    // x, y
             glVertex2f(tree[i][2], tree[i][3]);
+        glEnd();
+    }
+
+
+    // Draw particles
+    glPointSize(2);
+    for (int i = 0; i < particles.size(); i++) {
+        glBegin(GL_POINTS);              
+            glColor3f(0.95f, 0.258f, 0.898f); 
+            glVertex2f(particles[i][0], particles[i][1]);    // x, y
         glEnd();
     }
 
@@ -129,10 +181,14 @@ void display() {
         glVertex2f(reached[0], reached[1]);    // x, y
     glEnd();
 
-    DrawCircle(obs1, 20);
-    DrawCircle(obs2, 20);
-    DrawCircle(obs3, 20);
- 
+    // glPointSize(4);
+    // for (int i = 0; i < motions.size(); i++) {
+    //     glBegin(GL_POINTS);              
+    //         glColor3f(0.0f, 0.0f, 1.0f); 
+    //         glVertex2f(motions[i][0], motions[i][1]);    // x, y
+    //     glEnd();
+    // }
+
     glFlush();  // Render now
 }
 
@@ -141,6 +197,8 @@ int main(int argc, char **argv)
 {
     get_path_data();
     get_tree_data();
+    get_particles_data();
+    get_motions_data();
     // for (int i = 0; i < tree.size(); i++)
     //     cout << tree[i][0] << " " << tree[i][1] << endl;
 
