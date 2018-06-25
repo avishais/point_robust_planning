@@ -297,6 +297,8 @@ namespace ompl
             /** \brief Transform type vector type to ob::State **/
             void updateStateVector(const base::State *, Vector);
 
+            void printStateVector(const base::State *);
+
             /** \brief The maximum time step to propagate */
             double maxTimeStep_;
 

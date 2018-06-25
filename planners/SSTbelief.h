@@ -221,7 +221,7 @@ namespace ompl
                 Vector stddev{{.1, .1}};
 
                 /** Number of particles to propagate */
-                unsigned nParticles_{10};
+                unsigned nParticles_{100};
             };
 
             class Witness : public Motion
@@ -309,6 +309,9 @@ namespace ompl
 
             /** \brief Transform type vector type to ob::State **/
             void updateStateVector(const base::State *, Vector);
+
+            /** Print ob::State type */
+            void printStateVector(const base::State *);
 
             /** \brief The maximum time step to propagate */
             double maxTimeStep_;

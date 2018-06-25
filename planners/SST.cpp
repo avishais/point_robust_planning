@@ -166,6 +166,16 @@ void ompl::geometric::SST::updateStateVector(const base::State *state, Vector q)
 	}
 }
 
+void ompl::geometric::SST::printStateVector(const base::State *state) {
+	// cast the abstract state type to the type we expect
+	const base::RealVectorStateSpace::StateType *Q = state->as<base::RealVectorStateSpace::StateType>();
+
+    cout << "[ ";
+	for (unsigned i = 0; i < 2; i++) 
+		cout << Q->values[i] << " "; 
+    cout << "]" << endl;
+}
+
 ompl::geometric::SST::Motion *ompl::geometric::SST::selectNode(ompl::geometric::SST::Motion *sample)
 {
     std::vector<Motion *> ret;
@@ -256,7 +266,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         auto *motion = new Motion(si_);
         si_->copyState(motion->state_, st);
         nn_->add(motion);
-        motion->accCost_ = opt_->identityCost();
+        motion->accCost_ = opt_->combineCosts( opt_->identityCost(), opt_->costToGo(motion->state_, goal) );
         motion->rootToStateCost_ = opt_->identityCost();
         findClosestWitness(motion);
     }

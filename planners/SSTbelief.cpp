@@ -166,6 +166,16 @@ void ompl::geometric::SST::updateStateVector(const base::State *state, Vector q)
 	}
 }
 
+void ompl::geometric::SST::printStateVector(const base::State *state) {
+	// cast the abstract state type to the type we expect
+	const base::RealVectorStateSpace::StateType *Q = state->as<base::RealVectorStateSpace::StateType>();
+
+    cout << "[ ";
+	for (unsigned i = 0; i < 2; i++) 
+		cout << Q->values[i] << " "; 
+    cout << "]" << endl;
+}
+
 ompl::geometric::SST::Motion *ompl::geometric::SST::selectNode(ompl::geometric::SST::Motion *sample)
 {
     std::vector<Motion *> ret;
@@ -267,7 +277,6 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
     u[1] = rng_.uniformReal(-PI, PI);
 
     Vector MeanState(2, 0); // Should be removed when including clustering
-
     int numSuccess_particles = 0;
     for (int i = 0; i < nmotion->nParticles_; i++) {
         // Take a step from a particle with dt and control u
@@ -278,15 +287,18 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
             continue;
         
         motion->particles.push_back(x_new);
-        motion->nParticles_++;
+        numSuccess_particles++;
 
         MeanState[0] += x_new[0];
         MeanState[1] += x_new[1];
     } 
 
-    if (motion->nParticles_ < 0.15 * nmotion->nParticles_) // If could not propagate enough (less than 15% of the neighbors particles)
+    if (numSuccess_particles == 0/*< 0.15 * nmotion->nParticles_*/) { // If could not propagate enough (less than 15% of the neighbors particles)
+        delete motion;
         return nullptr;
+    }
 
+    motion->nParticles_ = numSuccess_particles;
     MeanState[0] /= motion->nParticles_;
     MeanState[1] /= motion->nParticles_;
     updateStateVector(motion->state_, MeanState);
@@ -309,7 +321,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         si_->copyState(motion->state_, st);
         sampleParticles4Motion(motion);
         nn_->add(motion);
-        motion->accCost_ = opt_->identityCost();
+        motion->accCost_ = opt_->combineCosts( opt_->identityCost(), opt_->costToGo(motion->state_, goal) );
         motion->rootToStateCost_ = opt_->identityCost();
         findClosestWitness(motion);
     }
@@ -347,48 +359,26 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         /* find closest state in the tree */
         Motion *nmotion = selectNode(rmotion);
 
-        base::State *dstate = rstate;
-        double d = si_->distance(nmotion->state_, rstate);
+        // dstate = monteCarloProp(nmotion);
+        auto *motion = ParticlesProp(nmotion); // Propagation already creates a motion, if enough particles  
 
-        attemptToReachGoal = rng_.uniform01() < .5;
-        if (attemptToReachGoal)
+        if (motion != nullptr)
         {
-            if (d > maxDistance_)
-            {
-                si_->getStateSpace()->interpolate(nmotion->state_, rstate, maxDistance_ / d, xstate);
-                dstate = xstate;
-            }
-        }
-        else
-        {
-            dstate = monteCarloProp(nmotion);
-        }
-
-        si_->copyState(rstate, dstate);
-
-        if (si_->checkMotion(nmotion->state_, rstate))
-        {
-            base::Cost incCost = opt_->combineCosts( opt_->motionCost(nmotion->state_, rstate), opt_->costToGo(rstate, goal) ); // c + h
+            base::Cost incCost = opt_->combineCosts( opt_->motionCost(nmotion->state_, motion->state_), opt_->costToGo(motion->state_, goal) ); // c + h
             base::Cost cost = opt_->combineCosts(nmotion->rootToStateCost_, incCost);
-            Witness *closestWitness = findClosestWitness(rmotion);
+            Witness *closestWitness = findClosestWitness(motion);
 
-            if (closestWitness->rep_ == rmotion || opt_->isCostBetterThan(cost, closestWitness->rep_->accCost_))
+            if (closestWitness->rep_ == motion || opt_->isCostBetterThan(cost, closestWitness->rep_->accCost_))
             {
                 Motion *oldRep = closestWitness->rep_;
-                /* create a motion */
-                auto *motion = new Motion(si_);
                 motion->accCost_ = cost;
                 motion->rootToStateCost_ = opt_->combineCosts( nmotion->rootToStateCost_, opt_->motionCost(nmotion->state_, rstate) );
-                si_->copyState(motion->state_, rstate);
-                sampleParticles4Motion(motion);
-
-                if (!attemptToReachGoal)
-                    si_->freeState(dstate);
                 motion->parent_ = nmotion;
                 nmotion->numChildren_++;
                 closestWitness->linkRep(motion);
 
                 nn_->add(motion);
+
                 double dist = 0.0;
                 bool solv = goal->isSatisfied(motion->state_, &dist);
                 if (solv && opt_->isCostBetterThan(motion->accCost_, prevSolutionCost_))
@@ -434,7 +424,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                     }
                 }
 
-                if (oldRep != rmotion)
+                if (oldRep != motion)
                 {
                     oldRep->inactive_ = true;
                     nn_->remove(oldRep);
@@ -450,6 +440,8 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                     }
                 }
             }
+            else
+                delete motion;
         }
         iterations++;
     }
@@ -523,6 +515,7 @@ void ompl::geometric::SST::listTree() {
 
     std::vector<Motion*> motions;
 	nn_->list(motions);
+    cout << "Tree size: " << motions.size() << endl;
 
     Vector q1(2), q2(2);
     for (int i = 1; i < motions.size(); i++) {
