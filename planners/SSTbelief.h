@@ -224,7 +224,12 @@ namespace ompl
                 unsigned nParticles_{100};
 
                 /** Probability of reaching the node */
-                double prob_quality_{1};
+                double probability_{1};
+
+                int nodesFromRoot_{0};
+
+                /** Quality of node based on normalized probability of reaching the node */
+                double quality_{1};
             };
 
             class Witness : public Motion
@@ -330,11 +335,11 @@ namespace ompl
             /** Sample particles for a motion with normal distribution **/
             void sampleParticles4Motion(Motion *);
 
-
             /** Propagate a set of particles based on the uncertainty in the current state **/
             Motion *ParticlesProp(Motion *);
 
-           
+            /** Minimum probability in tree */
+            double min_probability_{0};         
         };
     }
 }

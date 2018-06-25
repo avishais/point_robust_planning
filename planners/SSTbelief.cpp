@@ -318,9 +318,12 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         auto *motion = new Motion(si_);
         si_->copyState(motion->state_, st);
         sampleParticles4Motion(motion);
-        nn_->add(motion);
         motion->accCost_ = opt_->combineCosts( opt_->identityCost(), opt_->costToGo(motion->state_, goal) );
         motion->rootToStateCost_ = opt_->identityCost();
+        motion->probability_ = 1;
+        motion->quality_ = 1;
+        motion->nodesFromRoot_ = 0;
+        nn_->add(motion);
         findClosestWitness(motion);
     }
 
@@ -360,6 +363,19 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         // dstate = monteCarloProp(nmotion);
         auto *motion = ParticlesProp(nmotion); // Propagation already creates a motion, if enough particles  
 
+        // Bias toward more qualitative nodes
+        if (motion != nullptr) {
+            motion->probability_ = nmotion->probability_ * double(motion->nParticles_) / nmotion->nParticles_;
+            if (min_probability_ == 1.)
+                motion->quality_ = motion->probability_; //pow(motion->probability_, 1.0/(nmotion->nodesFromRoot_+1))
+            else
+                motion->quality_ = (motion->probability_ - min_probability_) / (1. - min_probability_);
+            if (motion->quality_ < rng_.uniform01()) {
+                delete motion;
+                motion = nullptr;
+            }
+        }
+
         if (motion != nullptr)
         {
             base::Cost incCost = opt_->combineCosts( opt_->motionCost(nmotion->state_, motion->state_), opt_->costToGo(motion->state_, goal) ); // c + h
@@ -373,6 +389,10 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                 motion->rootToStateCost_ = opt_->combineCosts( nmotion->rootToStateCost_, opt_->motionCost(nmotion->state_, motion->state_) );
                 motion->parent_ = nmotion;
                 nmotion->numChildren_++;
+                motion->nodesFromRoot_ = nmotion->nodesFromRoot_ + 1;
+                if (motion->probability_ < min_probability_) // track minimum quality
+                    min_probability_ = motion->probability_;
+                
                 closestWitness->linkRep(motion);
 
                 nn_->add(motion);
@@ -396,7 +416,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                     }
                     prevSolutionCost_ = solution->accCost_;
 
-                    OMPL_INFORM("Found solution with cost %.2f", solution->accCost_.value());
+                    OMPL_INFORM("Found solution with cost %.2f and (probability, quality) <%.2f, %.2f>", solution->accCost_.value(), motion->probability_, motion->quality_);
                     sufficientlyShort = opt_->isSatisfied(solution->accCost_);
                     if (sufficientlyShort)
                     {
@@ -513,7 +533,6 @@ void ompl::geometric::SST::listTree() {
 
     std::vector<Motion*> motions;
 	nn_->list(motions);
-    cout << "Tree size: " << motions.size() << endl;
 
     Vector q1(2), q2(2);
     for (int i = 1; i < motions.size(); i++) {
