@@ -296,6 +296,9 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
         return nullptr;
     }
 
+    // vector<cluster> C = getClusters(motion->particles);
+    // cout << C.size() << endl;
+
     motion->nParticles_ = numSuccess_particles;
     MeanState[0] /= motion->nParticles_;
     MeanState[1] /= motion->nParticles_;

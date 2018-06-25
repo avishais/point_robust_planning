@@ -16,7 +16,7 @@ int kmeans_clustering::elbow(vector<Point2f> points, int num_points) {
     int attempts=3, flags=cv::KMEANS_RANDOM_CENTERS; // hey, just guessing here
     TermCriteria tc;
 
-    for (int k = 1; k < 7; k++) {
+    for (int k = 1; k < min(7, num_points); k++) {
         sse[k-1] = 0;
         kmeans(points,k,labels,tc,attempts,flags, centers);   // points will get cast implicitly to Mat
         
@@ -31,7 +31,10 @@ int kmeans_clustering::elbow(vector<Point2f> points, int num_points) {
             }
         }
     }
-   
+    for (int k = 1; k < (int)sse.size() && sse[k]; k++)
+        cout << sse[k] << " ";
+    cout << endl;
+ 
     for (int k = 1; k < (int)sse.size() && sse[k]; k++)
         if ( (sse[k-1]-sse[k]) / sse[k-1] < 0.3)
             return k;
@@ -44,7 +47,7 @@ vector<cluster> kmeans_clustering::getClusters(Matrix P) {
 
     int K = elbow(points, num_points);
 
-    Mat labels,centers;
+    Mat labels, centers;
     int attempts=3, flags=cv::KMEANS_RANDOM_CENTERS; // hey, just guessing here
     TermCriteria tc;
     kmeans(points, K, labels, tc, attempts, flags, centers);   // points will get cast implicitly to Mat
@@ -63,6 +66,9 @@ vector<cluster> kmeans_clustering::getClusters(Matrix P) {
         }
         C.push_back(c);
     }
+
+    printClusters(C);
+    cin.ignore();
 
     return C;
 }
