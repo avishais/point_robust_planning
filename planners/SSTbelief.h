@@ -222,6 +222,9 @@ namespace ompl
 
                 /** Number of particles to propagate */
                 unsigned nParticles_{100};
+
+                /** Probability of reaching the node */
+                double prob_quality_{1};
             };
 
             class Witness : public Motion

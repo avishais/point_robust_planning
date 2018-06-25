@@ -263,8 +263,6 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
     Vector x_ng(2);
     retrieveStateVector(nmotion->state_, x_ng);
 
-    Matrix P = nmotion->particles;
-
     // Create new motion
     auto *motion = new Motion(si_);
 
@@ -372,7 +370,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
             {
                 Motion *oldRep = closestWitness->rep_;
                 motion->accCost_ = cost;
-                motion->rootToStateCost_ = opt_->combineCosts( nmotion->rootToStateCost_, opt_->motionCost(nmotion->state_, rstate) );
+                motion->rootToStateCost_ = opt_->combineCosts( nmotion->rootToStateCost_, opt_->motionCost(nmotion->state_, motion->state_) );
                 motion->parent_ = nmotion;
                 nmotion->numChildren_++;
                 closestWitness->linkRep(motion);

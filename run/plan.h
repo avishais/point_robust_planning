@@ -18,7 +18,7 @@
 
 // Modified and custom planners
 // #include "RRT.h"
-#ifdef SST
+#ifdef SSTA
 	#include "SST.h"
 #else
 	#include "SSTbelief.h"
