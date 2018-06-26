@@ -330,7 +330,7 @@ namespace ompl
             void listTree();
 
             /** Number of particles **/
-            // int numParticles_{100};
+            int maxParticles_{100};
 
             /** Sample particles for a motion with normal distribution **/
             void sampleParticles4Motion(Motion *);

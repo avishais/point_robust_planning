@@ -277,9 +277,6 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
     Vector MeanState(2, 0); // Should be removed when including clustering
     int numSuccess_particles = 0;
     for (int i = 0; i < nmotion->nParticles_; i++) {
-        w[0] = u[0] + rng_.gaussian(0, 1.);
-        w[1] = u[1] + rng_.gaussian(0, 1.);   
-
         // Take a step from a particle with dt and control u
         Vector x_new = prop(nmotion->particles[i], u, dt);
         updateStateVector(xstate, x_new);

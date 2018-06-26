@@ -8,6 +8,7 @@
 #include <ompl/base/objectives/PathLengthOptimizationObjective.h>
 #include <ompl/base/objectives/StateCostIntegralObjective.h>
 #include <ompl/config.h>
+#include <ompl/util/RandomNumbers.h>
 
 // Standard libraries
 #include <iostream>
@@ -108,6 +109,8 @@ private:
         return f;
     }
 
+    ompl::RNG rng_;
+
 public:
     // Constructor
     gen_system() {};
@@ -115,6 +118,9 @@ public:
     // Propogate state x with random u and dt
     Vector prop(Vector x, Vector u, double dt) {
         Vector x_next(2);
+
+        u[0] += rng_.gaussian(0, .1);
+        u[1] += rng_.gaussian(0, .1);   
 
         Vector f = f_func(x, u);
 

@@ -41,11 +41,95 @@ int kmeans_clustering::elbow(vector<Point2f> points, int num_points) {
     return 1;
 }
 
+double kmeans_clustering::sqEucDistance(Point2f p1, Point2f p2) {
+    return (p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y);
+}
+
+int kmeans_clustering::silhouette(vector<Point2f> points, int num_points) {
+    Vector sse(num_points);
+    Mat labels, centers;
+    int attempts=3, flags=cv::KMEANS_RANDOM_CENTERS; // hey, just guessing here
+    TermCriteria tc;
+
+    int K = min(7, num_points);
+    Vector S(K);
+    for (int k = 2; k < K; k++) {
+        kmeans(points,k,labels,tc,attempts,flags, centers);   // points will get cast implicitly to Mat
+        
+        double s = 0;
+        for (int i = 0; i < num_points; i++) {
+            double a = 0;
+            int a_c = 0;
+            Matrix b;
+            for (int j = 0; j < k; j++)
+                b.push_back({0,0});
+
+            int curr_cluster = labels.at<int>(i);
+
+            for (int j = 0; j < num_points; j++) {
+                if (i==j)
+                    continue;
+                if (labels.at<int>(j) == curr_cluster) {
+                    a += sqEucDistance(points[i], points[j]);
+                    a_c++;
+                }
+                else { // if (labels.at<int>(j) ~= curr_cluster)
+                    b[labels.at<int>(j)][0] += sqEucDistance(points[i], points[j]);
+                    b[labels.at<int>(j)][1]++;
+                }
+            }
+
+            // cout << "i: " << i << endl;
+            // for (int j = 0; j < 2; j++)
+            //     cout << b[j][0] << " ";
+            // cout << endl;
+            // for (int j = 0; j < 2; j++)
+            //     cout << b[j][1] << " ";
+            // cout << endl;
+            // cin.ignore();
+            
+            // if there is only one point in the cluster
+            if (a_c==0) {
+                s += 1;
+                continue;
+            }
+
+            a = a/a_c;
+            double min_b = 1e9;
+            for (int j = 0; j < k; j++) {
+                if (b[j][1]) {
+                    b[j][0] /= b[j][1];
+                    if (b[j][0] < min_b)
+                        min_b = b[j][0];
+                }
+            }
+            // cout << a << " " << min_b << " " << (min_b - a) / std::max(a, min_b) << endl;
+            // Silhoutte cumsum
+            s += (min_b - a) / std::max(a, min_b);
+        }
+        S[k-1] = s / num_points;    
+    }
+    double maxS = 0;
+    for (int k = 0; k < (int)S.size(); k++) {
+        if (S[k] > maxS) {
+            maxS = S[k];
+            K = k+1;
+        }
+    }
+
+    if (K < 0.7)
+        return 1;
+
+    return K;
+}
+
 vector<cluster> kmeans_clustering::getClusters(Matrix P) {
     vector<Point2f> points = load_data(P);
     int num_points = P.size();
 
-    int K = elbow(points, num_points);
+    // int K = elbow(points, num_points);
+    int K = silhouette(points, num_points);
+
 
     Mat labels, centers;
     int attempts=3, flags=cv::KMEANS_RANDOM_CENTERS; // hey, just guessing here
@@ -67,8 +151,8 @@ vector<cluster> kmeans_clustering::getClusters(Matrix P) {
         C.push_back(c);
     }
 
-    printClusters(C);
-    cin.ignore();
+    // printClusters(C);
+    // cin.ignore();
 
     return C;
 }
