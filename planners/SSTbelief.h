@@ -230,6 +230,8 @@ namespace ompl
 
                 /** Quality of node based on normalized probability of reaching the node */
                 double quality_{1};
+
+                Vector action;
             };
 
             class Witness : public Motion
@@ -330,7 +332,7 @@ namespace ompl
             void listTree();
 
             /** Number of particles **/
-            int maxParticles_{100};
+            const int maxNumParticles_{500};
 
             /** Sample particles for a motion with normal distribution **/
             void sampleParticles4Motion(Motion *);
@@ -338,8 +340,17 @@ namespace ompl
             /** Propagate a set of particles based on the uncertainty in the current state **/
             Motion *ParticlesProp(Motion *);
 
+            /** Simulate system */
+            void simulate(Motion *);
+
+            /** Propagate a set of particles based on the uncertainty in the current state and cluster **/
+            vector<ompl::geometric::SST::Motion *> ParticlesPropClustering(Motion *nmotion);
+
             /** Minimum probability in tree */
-            double min_probability_{0};         
+            double min_probability_{1.}; 
+
+            /** Time step for propagation */
+            double dt;        
         };
     }
 }

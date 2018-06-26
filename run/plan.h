@@ -29,6 +29,9 @@
 #include <fstream>
 #include <vector>
 
+#include <chrono>  // for high_resolution_clock
+typedef std::chrono::high_resolution_clock Clock;
+
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 using namespace std;

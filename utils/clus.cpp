@@ -78,15 +78,6 @@ int kmeans_clustering::silhouette(vector<Point2f> points, int num_points) {
                     b[labels.at<int>(j)][1]++;
                 }
             }
-
-            // cout << "i: " << i << endl;
-            // for (int j = 0; j < 2; j++)
-            //     cout << b[j][0] << " ";
-            // cout << endl;
-            // for (int j = 0; j < 2; j++)
-            //     cout << b[j][1] << " ";
-            // cout << endl;
-            // cin.ignore();
             
             // if there is only one point in the cluster
             if (a_c==0) {
@@ -103,7 +94,6 @@ int kmeans_clustering::silhouette(vector<Point2f> points, int num_points) {
                         min_b = b[j][0];
                 }
             }
-            // cout << a << " " << min_b << " " << (min_b - a) / std::max(a, min_b) << endl;
             // Silhoutte cumsum
             s += (min_b - a) / std::max(a, min_b);
         }
@@ -116,8 +106,8 @@ int kmeans_clustering::silhouette(vector<Point2f> points, int num_points) {
             K = k+1;
         }
     }
-
-    if (K < 0.7)
+    // cout << K << " " << maxS << " ";
+    if (maxS < 0.7)
         return 1;
 
     return K;
@@ -151,8 +141,6 @@ vector<cluster> kmeans_clustering::getClusters(Matrix P) {
         C.push_back(c);
     }
 
-    // printClusters(C);
-    // cin.ignore();
 
     return C;
 }

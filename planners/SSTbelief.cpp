@@ -229,8 +229,7 @@ ompl::geometric::SST::Witness *ompl::geometric::SST::findClosestWitness(ompl::ge
     }
 }
 
-ompl::base::State *ompl::geometric::SST::monteCarloProp(Motion *m)
-{
+ompl::base::State *ompl::geometric::SST::monteCarloProp(Motion *m) {
     // Destination state
     base::State *xstate = si_->allocState();
 
@@ -254,8 +253,7 @@ ompl::base::State *ompl::geometric::SST::monteCarloProp(Motion *m)
     return xstate;
 }
 
-ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotion)
-{
+ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotion) {
     // Destination state
     base::State *xstate = si_->allocState();
     base::State *wstate = si_->allocState();
@@ -267,23 +265,26 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
     auto *motion = new Motion(si_);
 
     // Sample time step
-    double dt = maxTimeStep_/2; //rng_.uniformReal(0, maxTimeStep_);
+    dt = maxTimeStep_/2; //rng_.uniformReal(0, maxTimeStep_);
 
     // Sample control
-    Vector u(2), w(2);
+    Vector u(2);
     u[0] = rng_.uniformReal(0, maxVelocity_);
     u[1] = rng_.uniformReal(-PI, PI);
 
     Vector MeanState(2, 0); // Should be removed when including clustering
     int numSuccess_particles = 0;
-    for (int i = 0; i < nmotion->nParticles_; i++) {
+    for (int i = 0; i < maxNumParticles_; i++) {
+        // randomly pick a particle and propagate
+        int l = rng_.uniformInt(0, nmotion->nParticles_-1);
+
         // Take a step from a particle with dt and control u
-        Vector x_new = prop(nmotion->particles[i], u, dt);
+        Vector x_new = prop(nmotion->particles[l], u, dt);
         updateStateVector(xstate, x_new);
-        updateStateVector(wstate, nmotion->particles[i]);
+        updateStateVector(wstate, nmotion->particles[l]);
         if (!si_->satisfiesBounds(xstate) || !si_->checkMotion(wstate, xstate)) // Verify that propagation is within the bounds and collision free
             continue;
-        
+
         motion->particles.push_back(x_new);
         numSuccess_particles++;
 
@@ -298,15 +299,78 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
 
     // vector<cluster> C = getClusters(motion->particles);
     // cout << C.size() << endl;
-
     motion->nParticles_ = numSuccess_particles;
+    motion->action.push_back(u[0]);
+    motion->action.push_back(u[1]);
     MeanState[0] /= motion->nParticles_;
     MeanState[1] /= motion->nParticles_;
     updateStateVector(motion->state_, MeanState);
-    
+
     si_->freeState(xstate);
     si_->freeState(wstate);
+
     return motion;
+}
+
+vector<ompl::geometric::SST::Motion *> ompl::geometric::SST::ParticlesPropClustering(Motion *nmotion) {
+    // Destination state
+    base::State *xstate = si_->allocState();
+    base::State *wstate = si_->allocState();
+
+    Vector x_ng(2);
+    retrieveStateVector(nmotion->state_, x_ng);
+
+    // Create new motion
+    // auto *motion = new Motion(si_);
+    vector<Motion *> motions;
+
+    // New particles dataset
+    Matrix P;
+
+    // Sample time step
+    double dt = maxTimeStep_/2; //rng_.uniformReal(0, maxTimeStep_);
+
+    // Sample control
+    Vector u(2), w(2);
+    u[0] = rng_.uniformReal(0, maxVelocity_);
+    u[1] = rng_.uniformReal(-PI, PI);
+
+    Vector MeanState(2, 0); // Should be removed when including clustering
+    int numSuccess_particles = 0;
+    for (int i = 0; i < maxNumParticles_; i++) {
+        // randomly pick a particle and propagate
+        int l = rng_.uniformInt(0, nmotion->nParticles_-1);
+
+        // Take a step from a particle with dt and control u
+        Vector x_new = prop(nmotion->particles[l], u, dt);
+        updateStateVector(xstate, x_new);
+        updateStateVector(wstate, nmotion->particles[l]);
+        if (!si_->satisfiesBounds(xstate) || !si_->checkMotion(wstate, xstate)) // Verify that propagation is within the bounds and collision free
+            continue;
+
+        P.push_back(x_new);
+        numSuccess_particles++;
+    } 
+
+    if (numSuccess_particles == 0/*< 0.15 * nmotion->nParticles_*/)  // If could not propagate enough (less than 15% of the neighbors particles)
+        return motions;
+
+    vector<cluster> C = getClusters(P);
+    for (int i = 0; i < C.size(); i++) {
+        auto *motion = new Motion(si_);
+        motion->nParticles_ = C[i].num_points;
+        motion->particles = C[i].points;
+        updateStateVector(motion->state_, C[i].centroid);
+
+        motion->probability_ = nmotion->probability_ * double(motion->nParticles_) / maxNumParticles_;
+
+        motions.push_back(motion);
+    }
+
+    si_->freeState(xstate);
+    si_->freeState(wstate);
+
+    return motions;
 }
 
 ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTerminationCondition &ptc)
@@ -326,6 +390,8 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         motion->probability_ = 1;
         motion->quality_ = 1;
         motion->nodesFromRoot_ = 0;
+        motion->action.push_back(0);
+        motion->action.push_back(0);
         nn_->add(motion);
         findClosestWitness(motion);
     }
@@ -364,11 +430,12 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         Motion *nmotion = selectNode(rmotion);
 
         // dstate = monteCarloProp(nmotion);
-        auto *motion = ParticlesProp(nmotion); // Propagation already creates a motion, if enough particles  
+        auto *motion = ParticlesProp(nmotion); // Propagation already creates a motion, if enough particles
+        // vector<Motion *> motions = ParticlesPropClustering(nmotion);
 
         // Bias toward more qualitative nodes
         if (motion != nullptr) {
-            motion->probability_ = nmotion->probability_ * double(motion->nParticles_) / nmotion->nParticles_;
+            motion->probability_ = nmotion->probability_ * double(motion->nParticles_) / maxNumParticles_;
             if (min_probability_ == 1.)
                 motion->quality_ = motion->probability_; //pow(motion->probability_, 1.0/(nmotion->nodesFromRoot_+1))
             else
@@ -393,6 +460,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                 motion->parent_ = nmotion;
                 nmotion->numChildren_++;
                 motion->nodesFromRoot_ = nmotion->nodesFromRoot_ + 1;
+                // cout << min_probability_ << endl;
                 if (motion->probability_ < min_probability_) // track minimum quality
                     min_probability_ = motion->probability_;
                 
@@ -406,6 +474,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                 {
                     approxdif = dist;
                     solution = motion;
+                    cout << "solution: " << solution->accCost_ << endl;
 
                     for (auto &i : prevSolution_)
                         if (i)
@@ -419,7 +488,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                     }
                     prevSolutionCost_ = solution->accCost_;
 
-                    OMPL_INFORM("Found solution with cost %.2f and (probability, quality) <%.2f, %.2f>", solution->accCost_.value(), motion->probability_, motion->quality_);
+                    OMPL_INFORM("Found solution with cost %.2f and (probability, quality) <%.2f, %.2f>", solution->accCost_.value(), solution->probability_, solution->quality_);
                     sufficientlyShort = opt_->isSatisfied(solution->accCost_);
                     if (sufficientlyShort)
                     {
@@ -430,6 +499,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                 {
                     approxdif = dist;
                     approxsol = motion;
+                    cout << "approxsol: " << approxsol->accCost_  << endl;
 
                     for (auto &i : prevSolution_)
                     {
@@ -461,7 +531,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                     }
                 }
             }
-            else
+            else 
                 delete motion;
         }
         iterations++;
@@ -473,6 +543,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
     {
         solution = approxsol;
         approximate = true;
+        cout << "Visited approximate " << solution->accCost_ << " " << approxsol->accCost_ << endl;
     }
 
     if (solution != nullptr)
@@ -484,7 +555,14 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         solved = true;
         pdef_->addSolutionPath(path, approximate, approxdif, getName());
 
+        if (approximate)
+            OMPL_INFORM("Final approximated solution with cost %.2f and (probability, quality) <%.2f, %.2f>", solution->accCost_.value(), solution->probability_, solution->quality_);
+        else
+            OMPL_INFORM("Final solution with cost %.2f and (probability, quality) <%.2f, %.2f>", solution->accCost_.value(), solution->probability_, solution->quality_);
+
         listTree();
+        cout << approximate << endl;
+        // simulate(solution);
     }
 
     si_->freeState(xstate);
@@ -527,6 +605,16 @@ void ompl::geometric::SST::getPlannerData(base::PlannerData &data) const
     }
 }
 
+void ompl::geometric::SST::sampleParticles4Motion(Motion *motion) {
+
+    // Gen initial particles
+    Vector s(2);
+    retrieveStateVector(motion->state_, s);
+    for (int i = 0; i < maxNumParticles_; i++)
+        motion->particles.push_back({rng_.gaussian(s[0], motion->stddev[0]), rng_.gaussian(s[1], motion->stddev[1])});
+}
+
+
 void ompl::geometric::SST::listTree() {
 
     std::ofstream TF, TP, TM;
@@ -548,7 +636,7 @@ void ompl::geometric::SST::listTree() {
 
                 for (int j = 0; j < tmotion->particles.size(); j++) {
                     TP << tmotion->particles[j][0] << " " << tmotion->particles[j][1] << endl;
-                    TP << tmotion->parent_->particles[j][0] << " " << tmotion->parent_->particles[j][1] << endl;
+                    // TP << tmotion->parent_->particles[j][0] << " " << tmotion->parent_->particles[j][1] << endl;
                 }
 
                 TM << q1[0] << " " << q1[1] << endl;
@@ -564,13 +652,39 @@ void ompl::geometric::SST::listTree() {
     TM.close();
 }
 
+void ompl::geometric::SST::simulate(Motion *solution) {
+    
+    Matrix Ur, U;
+    Motion *solTrav = solution;
+    Vector x(2);
+    ln
+    cout << solution << " " << (solution==nullptr) << endl;
+    while (solTrav != nullptr)
+    {
+        ln
+        cout << solTrav->action.size() << endl;
+        Ur.push_back(solTrav->action);
+        ln
+        retrieveStateVector(solTrav->state_, x);
+        ln
+        solTrav = solTrav->parent_;
+        ln
+    }
+    ln
+    Ur.pop_back();
+    for (int i = Ur.size() - 1; i >= 0; --i)
+        U.push_back(Ur[i]);
+ln
+    std::ofstream TS;
+	TS.open("./path/sim_path.txt");
 
+    TS << x[0] << " " << x[1] << endl;
 
-void ompl::geometric::SST::sampleParticles4Motion(Motion *motion) {
+    for (int i = 0; i < U.size(); i++) {
+        x = prop(x, U[i], dt);
+        TS << x[0] << " " << x[1] << endl;
+    }
 
-    // Gen initial particles
-    Vector s(2);
-    retrieveStateVector(motion->state_, s);
-    for (int i = 0; i < motion->nParticles_; i++)
-        motion->particles.push_back({rng_.gaussian(s[0], motion->stddev[0]), rng_.gaussian(s[1], motion->stddev[1])});
+    TS.close();
 }
+ 

@@ -17,6 +17,8 @@
 #include <stdlib.h>
 #include <vector>
 
+#define ln cout << __LINE__ << endl;
+
 // Environment parameters
 #include "point_sys_def.h"
 
@@ -119,8 +121,8 @@ public:
     Vector prop(Vector x, Vector u, double dt) {
         Vector x_next(2);
 
-        u[0] += rng_.gaussian(0, .1);
-        u[1] += rng_.gaussian(0, .1);   
+        u[0] += rng_.gaussian(0, .05);
+        u[1] += rng_.gaussian(0, .05);   
 
         Vector f = f_func(x, u);
 

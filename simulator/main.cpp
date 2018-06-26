@@ -18,7 +18,8 @@ const char* robot_pfile = "../path/path.txt";
 const char* tree_pfile  = "../path/tree.txt";
 const char* particles_pfile  = "../path/particles.txt";
 const char* motions_pfile  = "../path/motions.txt";
-Matrix path, tree, particles, motions;
+const char* sim_pfile  = "../path/sim_path.txt";
+Matrix path, tree, particles, motions, sim_path;
 Vector start(2), goal(2), reached(2);
 double fmax_x = 10., fmin_x = -10., fmax_y = 10., fmin_y = -10.;
 
@@ -60,6 +61,21 @@ void get_path_data() {
     goal = path[path.size()-1];
     path.pop_back();
     reached =  path[path.size()-1];
+}
+
+void get_sim_path_data() {
+    ifstream inFile;
+    inFile.open(sim_pfile);
+	if (!inFile) {
+        cout << "\nError opening file.\n";
+        return;
+    }
+	
+    Vector v(2);
+    while (inFile >> v[0] && inFile >> v[1]) {
+        v = convert2window(v);
+        sim_path.push_back(v);
+    }
 }
 
 void get_tree_data() {
@@ -181,6 +197,16 @@ void display() {
         glVertex2f(reached[0], reached[1]);    // x, y
     glEnd();
 
+    // Draw simulated path
+    glLineWidth(5);
+    for (int i = 0; i < sim_path.size()-1; i++) {
+        glBegin(GL_LINES);              
+            glColor3f(0.0f, 1.0f, 0.2f); 
+            glVertex2f(sim_path[i][0], sim_path[i][1]);    // x, y
+            glVertex2f(sim_path[i+1][0], sim_path[i+1][1]);
+        glEnd();
+    }
+
     // glPointSize(4);
     // for (int i = 0; i < motions.size(); i++) {
     //     glBegin(GL_POINTS);              
@@ -195,10 +221,13 @@ void display() {
 
 int main(int argc, char **argv)
 {
+    cout << "Displaying solution on screen. Press 'q' to quit." << endl;
+
     get_path_data();
     get_tree_data();
     get_particles_data();
     get_motions_data();
+    get_sim_path_data();
     // for (int i = 0; i < tree.size(); i++)
     //     cout << tree[i][0] << " " << tree[i][1] << endl;
 

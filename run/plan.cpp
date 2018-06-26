@@ -129,10 +129,9 @@ void plan_C::plan(Vector c_start, Vector c_goal, double runtime, plannerType pty
 	//pdef->print(std::cout); // Prints problem definition such as start and goal states and optimization objective
 
 	// attempt to solve the problem within one second of planning time
-	clock_t begin = clock();
+	auto sT = Clock::now();
 	ob::PlannerStatus solved = planner->solve(runtime);
-	clock_t end = clock();
-	cout << "Runtime: " << double(end - begin) / CLOCKS_PER_SEC << endl;
+	cout << "Runtime: " << std::chrono::duration<double>(Clock::now() - sT).count() << endl;
 
 	if (solved) {
 		// get the goal representation from the problem definition (not the same as the goal state)
