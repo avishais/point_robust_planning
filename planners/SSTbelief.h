@@ -42,7 +42,7 @@
 #include <ompl/base/spaces/SE3StateSpace.h>
 
 #include "mySetup.h"
-#include "clus.h"
+#include "meanshift.h"
 #include <fstream>
 
 namespace ompl
@@ -61,7 +61,7 @@ namespace ompl
            Asymptotically Optimal Sampling-based Kinodynamic Planning.
            [[PDF]](http://arxiv.org/abs/1407.2896)
         */
-        class SST : public base::Planner, public gen_system, public kmeans_clustering
+        class SST : public base::Planner, public gen_system, public MeanShift
         {
         public:
             /** \brief Constructor */
@@ -342,9 +342,6 @@ namespace ompl
 
             /** Simulate system */
             void simulate(Motion *);
-
-            /** Propagate a set of particles based on the uncertainty in the current state and cluster **/
-            vector<ompl::geometric::SST::Motion *> ParticlesPropClustering(Motion *nmotion);
 
             /** Minimum probability in tree */
             double min_probability_{1.}; 

@@ -51,9 +51,9 @@ int kmeans_clustering::silhouette(vector<Point2f> points, int num_points) {
     int attempts=3, flags=cv::KMEANS_RANDOM_CENTERS; // hey, just guessing here
     TermCriteria tc;
 
-    int K = min(7, num_points);
+    int K = min(3, num_points);
     Vector S(K);
-    for (int k = 2; k < K; k++) {
+    for (int k = 2; k <= K; k++) {
         kmeans(points,k,labels,tc,attempts,flags, centers);   // points will get cast implicitly to Mat
         
         double s = 0;
@@ -106,27 +106,41 @@ int kmeans_clustering::silhouette(vector<Point2f> points, int num_points) {
             K = k+1;
         }
     }
-    // cout << K << " " << maxS << " ";
+
     if (maxS < 0.7)
         return 1;
 
     return K;
 }
 
-vector<cluster> kmeans_clustering::getClusters(Matrix P) {
+vector<cluster> kmeans_clustering::getClusters(Matrix P, int K) {
+
+    vector<cluster> C;
+
     vector<Point2f> points = load_data(P);
     int num_points = P.size();
 
-    // int K = elbow(points, num_points);
-    int K = silhouette(points, num_points);
+    if (K <= 0) { // K is not given
+        // int K = elbow(points, num_points);
+        K = silhouette(points, num_points);
+    }
 
+    if (K == 1) { // To save computation time
+        cluster c;
+        c.centroid = calcCentroid(P);
+        c.num_points = P.size();
+        c.points = P;
+        C.push_back(c);
+        printClusters(C);
+        cin.ignore();
+        return C;
+    }
 
     Mat labels, centers;
     int attempts=3, flags=cv::KMEANS_RANDOM_CENTERS; // hey, just guessing here
     TermCriteria tc;
     kmeans(points, K, labels, tc, attempts, flags, centers);   // points will get cast implicitly to Mat
-
-    vector<cluster> C;
+    
     for (int i = 0; i < K; i++) {
         cluster c;
         c.centroid.push_back(centers.at<float>(i,0));
@@ -141,9 +155,21 @@ vector<cluster> kmeans_clustering::getClusters(Matrix P) {
         C.push_back(c);
     }
 
-
     return C;
 }
+
+Vector kmeans_clustering::calcCentroid(Matrix P) {
+    Vector cent(2, 0);
+    for (int i = 0; i < P.size(); i++) {
+        cent[0] += P[i][0];
+        cent[1] += P[i][1];
+    }
+    cent[0] /= P.size();
+    cent[1] /= P.size();
+
+    return cent;
+}
+
 
 void kmeans_clustering::printClusters(vector<cluster> C) {
 

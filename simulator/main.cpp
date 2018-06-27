@@ -235,7 +235,7 @@ int main(int argc, char **argv)
 	// glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB);
 
 	// set the callbacks
-    glutInitWindowSize(500, 500);   // Set the window's initial width & height
+    glutInitWindowSize(900, 900);   // Set the window's initial width & height
     glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
 
     // create the window

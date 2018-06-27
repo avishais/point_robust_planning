@@ -36,10 +36,11 @@ class kmeans_clustering {
 
         double sqEucDistance(Point2f p1, Point2f p2);
 
+        Vector calcCentroid(Matrix P);
         
     public:
 
-        vector<cluster> getClusters(Matrix P);
+        vector<cluster> getClusters(Matrix P, int k = -1);
 
         void printClusters(vector<cluster>);   
 };

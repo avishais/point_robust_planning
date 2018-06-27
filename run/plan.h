@@ -21,7 +21,7 @@
 #ifdef SSTA
 	#include "SST.h"
 #else
-	#include "SSTbelief.h"
+	#include "SSTbeliefClus.h"
 #endif
 
 // Standard libraries

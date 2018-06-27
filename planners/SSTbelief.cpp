@@ -312,67 +312,6 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
     return motion;
 }
 
-vector<ompl::geometric::SST::Motion *> ompl::geometric::SST::ParticlesPropClustering(Motion *nmotion) {
-    // Destination state
-    base::State *xstate = si_->allocState();
-    base::State *wstate = si_->allocState();
-
-    Vector x_ng(2);
-    retrieveStateVector(nmotion->state_, x_ng);
-
-    // Create new motion
-    // auto *motion = new Motion(si_);
-    vector<Motion *> motions;
-
-    // New particles dataset
-    Matrix P;
-
-    // Sample time step
-    double dt = maxTimeStep_/2; //rng_.uniformReal(0, maxTimeStep_);
-
-    // Sample control
-    Vector u(2), w(2);
-    u[0] = rng_.uniformReal(0, maxVelocity_);
-    u[1] = rng_.uniformReal(-PI, PI);
-
-    Vector MeanState(2, 0); // Should be removed when including clustering
-    int numSuccess_particles = 0;
-    for (int i = 0; i < maxNumParticles_; i++) {
-        // randomly pick a particle and propagate
-        int l = rng_.uniformInt(0, nmotion->nParticles_-1);
-
-        // Take a step from a particle with dt and control u
-        Vector x_new = prop(nmotion->particles[l], u, dt);
-        updateStateVector(xstate, x_new);
-        updateStateVector(wstate, nmotion->particles[l]);
-        if (!si_->satisfiesBounds(xstate) || !si_->checkMotion(wstate, xstate)) // Verify that propagation is within the bounds and collision free
-            continue;
-
-        P.push_back(x_new);
-        numSuccess_particles++;
-    } 
-
-    if (numSuccess_particles == 0/*< 0.15 * nmotion->nParticles_*/)  // If could not propagate enough (less than 15% of the neighbors particles)
-        return motions;
-
-    vector<cluster> C = getClusters(P);
-    for (int i = 0; i < C.size(); i++) {
-        auto *motion = new Motion(si_);
-        motion->nParticles_ = C[i].num_points;
-        motion->particles = C[i].points;
-        updateStateVector(motion->state_, C[i].centroid);
-
-        motion->probability_ = nmotion->probability_ * double(motion->nParticles_) / maxNumParticles_;
-
-        motions.push_back(motion);
-    }
-
-    si_->freeState(xstate);
-    si_->freeState(wstate);
-
-    return motions;
-}
-
 ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTerminationCondition &ptc)
 {
     checkValidity();
@@ -431,7 +370,6 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
 
         // dstate = monteCarloProp(nmotion);
         auto *motion = ParticlesProp(nmotion); // Propagation already creates a motion, if enough particles
-        // vector<Motion *> motions = ParticlesPropClustering(nmotion);
 
         // Bias toward more qualitative nodes
         if (motion != nullptr) {
@@ -513,7 +451,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                     }
                 }
  
-                if (oldRep != motion)
+                if (solution != nullptr && oldRep != motion && oldRep != solution) // This change prevents the deletion of the current solution via oldRep
                 {
                     /** This is a correction of the OMPL version when it is possible that the oldRep 
                         node is also the estimated solution. Therefore, the new rep replaces it as the approximated solution so far.
