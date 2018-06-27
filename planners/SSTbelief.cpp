@@ -460,7 +460,6 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                 motion->parent_ = nmotion;
                 nmotion->numChildren_++;
                 motion->nodesFromRoot_ = nmotion->nodesFromRoot_ + 1;
-                // cout << min_probability_ << endl;
                 if (motion->probability_ < min_probability_) // track minimum quality
                     min_probability_ = motion->probability_;
                 
@@ -474,7 +473,6 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                 {
                     approxdif = dist;
                     solution = motion;
-                    cout << "solution: " << solution->accCost_ << endl;
 
                     for (auto &i : prevSolution_)
                         if (i)
@@ -495,11 +493,11 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                         break;
                     }
                 }
+
                 if (solution == nullptr && dist < approxdif)
                 {
                     approxdif = dist;
                     approxsol = motion;
-                    cout << "approxsol: " << approxsol->accCost_  << endl;
 
                     for (auto &i : prevSolution_)
                     {
@@ -514,9 +512,17 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                         solTrav = solTrav->parent_;
                     }
                 }
-
+ 
                 if (oldRep != motion)
                 {
+                    /** This is a correction of the OMPL version when it is possible that the oldRep 
+                        node is also the estimated solution. Therefore, the new rep replaces it as the approximated solution so far.
+                    **/
+                    if (oldRep == approxsol) { 
+                        approxsol = motion;
+                        approxdif = dist;
+                    }
+
                     oldRep->inactive_ = true;
                     nn_->remove(oldRep);
                     while (oldRep->inactive_ && oldRep->numChildren_ == 0)
@@ -531,7 +537,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                     }
                 }
             }
-            else 
+            else
                 delete motion;
         }
         iterations++;
@@ -543,7 +549,6 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
     {
         solution = approxsol;
         approximate = true;
-        cout << "Visited approximate " << solution->accCost_ << " " << approxsol->accCost_ << endl;
     }
 
     if (solution != nullptr)
@@ -561,8 +566,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
             OMPL_INFORM("Final solution with cost %.2f and (probability, quality) <%.2f, %.2f>", solution->accCost_.value(), solution->probability_, solution->quality_);
 
         listTree();
-        cout << approximate << endl;
-        // simulate(solution);
+        simulate(solution);
     }
 
     si_->freeState(xstate);
@@ -654,27 +658,21 @@ void ompl::geometric::SST::listTree() {
 
 void ompl::geometric::SST::simulate(Motion *solution) {
     
+    cout << "Simulating...\n";
     Matrix Ur, U;
     Motion *solTrav = solution;
     Vector x(2);
-    ln
-    cout << solution << " " << (solution==nullptr) << endl;
+
     while (solTrav != nullptr)
     {
-        ln
-        cout << solTrav->action.size() << endl;
         Ur.push_back(solTrav->action);
-        ln
         retrieveStateVector(solTrav->state_, x);
-        ln
         solTrav = solTrav->parent_;
-        ln
     }
-    ln
     Ur.pop_back();
     for (int i = Ur.size() - 1; i >= 0; --i)
         U.push_back(Ur[i]);
-ln
+
     std::ofstream TS;
 	TS.open("./path/sim_path.txt");
 
