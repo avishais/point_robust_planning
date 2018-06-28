@@ -44,9 +44,7 @@
 
 #include "SSTbelief.h"
 
-ompl::geometric::SST::SST(const base::SpaceInformationPtr &si) : base::Planner(si, "SST"), 
-        maxTimeStep_(0.3), 
-        maxVelocity_(10)
+ompl::geometric::SST::SST(const base::SpaceInformationPtr &si) : base::Planner(si, "SST")
 {
     specs_.approximateSolutions = true;
     specs_.directed = true;
@@ -329,6 +327,7 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
 
 ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTerminationCondition &ptc)
 {
+    
     checkValidity();
     base::Goal *goal = pdef_->getGoal().get();
     auto *goal_s = dynamic_cast<base::GoalSampleableRegion *>(goal);
@@ -370,6 +369,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
     base::State *xstate = si_->allocState();
 
     unsigned iterations = 0;
+
 
     while (ptc == false)
     {

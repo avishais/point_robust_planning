@@ -326,11 +326,8 @@ namespace ompl
             /** Print ob::State type */
             void printStateVector(const base::State *);
 
-            /** \brief The maximum time step to propagate */
-            double maxTimeStep_;
-
             /** \brief The maximum velocity to propagate */
-            double maxVelocity_;
+            // const float maxVelocity_;
 
             void listTree();
 

@@ -136,6 +136,13 @@ public:
     void printVector(Vector x) {
         cout << "[ " << x[0] << ", " << x[1] << " ]" << endl;
     }
+
+    /** \brief The maximum velocity to propagate */
+    double maxVelocity_ = 10.;
+
+    /** \brief The maximum time step to propagate */
+    double maxTimeStep_ = 0.3;
+    
 };
 
 #endif
