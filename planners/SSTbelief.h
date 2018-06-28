@@ -45,6 +45,9 @@
 #include "meanshift.h"
 #include <fstream>
 
+#define MAXNUMPARTICLES 500
+#define DT 0.15
+
 namespace ompl
 {
     namespace geometric
@@ -332,7 +335,7 @@ namespace ompl
             void listTree();
 
             /** Number of particles **/
-            const int maxNumParticles_{500};
+            // const int maxNumParticles_{500};
 
             /** Sample particles for a motion with normal distribution **/
             void sampleParticles4Motion(Motion *);
@@ -347,7 +350,7 @@ namespace ompl
             double min_probability_{1.}; 
 
             /** Time step for propagation */
-            double dt;        
+            // double dt;        
         };
     }
 }

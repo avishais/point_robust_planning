@@ -58,12 +58,11 @@ Vector MeanShift::shift_point(Vector point, Matrix points ) {
     return shifted_point;
 }
 
-Matrix MeanShift::naiveNN_radius(Vector point, Matrix points, double r) {
+Matrix MeanShift::naiveNN_radius(Vector point, Matrix points) {
     
     Matrix P;
-    double r_sqr = r * r;
     for (int i = 0; i < points.size(); i++) 
-        if (euclidean_distance_sqr(point, points[i]) < r_sqr)
+        if (euclidean_distance_sqr(point, points[i]) < R_sqr)
             P.push_back(points[i]);
 
     return P;
@@ -82,23 +81,57 @@ Vector MeanShift::mean(Matrix points) {
     return m;
 }
 
-Vector MeanShift::meanshift(Matrix points, double r, double eps) {
-    dim = points[0].size();
+double MeanShift::stddev(Matrix points, Vector mean) {
+    Vector sd(dim, 0);
+    for (int i = 0; i < points.size(); i++)
+        for (int j = 0; j < dim; j++)
+            sd[j] += (points[i][j] - mean[j])*(points[i][j] - mean[j]);
+    double sum = 0;
+    for (int j = 0; j < dim; j++)
+        sum += sd[j] / points.size();
 
-    const double eps_sqr = eps * eps;
+    return sqrt(sum);
+}
+
+Vector MeanShift::meanshift(Matrix points) {
 
     Vector x = mean(points);
     Vector x_prev(dim);
     do {
         x_prev = x;
         // Points within a radius around the current point
-        Matrix M = naiveNN_radius(x, points, r);
+        Matrix M = naiveNN_radius(x, points);
         // Shift the current point
         x = shift_point(x, M);
 
     } while (euclidean_distance_sqr(x, x_prev) > eps_sqr);
 
     return x;
+}
+
+cluster MeanShift::meanshift(Matrix points, double r, double eps) {
+
+    dim = points[0].size();
+    eps_sqr = eps * eps;
+    R_sqr = r * r;
+
+    Matrix M = naiveNN_radius(meanshift(points), points);
+    
+    cluster C;
+    C.init(M[0].size(), M.size());
+    C.points = M;
+    C.centroid = mean(C.points);
+    C.stddev = stddev(C.points, C.centroid);
+
+    // Vector m = mean(points);
+    // Matrix M = naiveNN_radius(m, points);
+    // cluster C;
+    // C.init(M[0].size(), M.size());
+    // C.points = M;
+    // C.centroid = m;
+    // C.stddev = stddev(C.points, C.centroid);
+
+    return C;
 }
 
 // int main() {
@@ -108,7 +141,5 @@ Vector MeanShift::meanshift(Matrix points, double r, double eps) {
 //     Vector x = ms.meanshift(M, 3, 0.00001);
 
 //     cout << x[0] << " " << x[1] << endl;
-
-
 // }
 

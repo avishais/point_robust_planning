@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <vector>
 
-#define ln cout << __LINE__ << endl;
+#define LN cout << __LINE__ << endl;
 
 // Environment parameters
 #include "point_sys_def.h"
@@ -79,13 +79,13 @@ public:
     bool isValid(const ob::State* state) const
     {
         	const ob::RealVectorStateSpace::StateType *Q = state->as<ob::RealVectorStateSpace::StateType>();
-            double tol = 1.05;
+            double tol = 1.0;
 
-            if ( pow(Q->values[0]-obs1[0], 2) + pow(Q->values[1]-obs1[1], 2) < pow(obs1[2]*tol, 2) )
+            if ( pow(Q->values[0]-obs1[0], 2) + pow(Q->values[1]-obs1[1], 2) < pow((obs1[2]+CLEARANCE)*tol, 2) )
                 return false;
-            if ( pow(Q->values[0]-obs2[0], 2) + pow(Q->values[1]-obs2[1], 2) < pow(obs2[2]*tol, 2) )
+            if ( pow(Q->values[0]-obs2[0], 2) + pow(Q->values[1]-obs2[1], 2) < pow((obs2[2]+CLEARANCE)*tol, 2) )
                 return false;
-            if ( pow(Q->values[0]-obs3[0], 2) + pow(Q->values[1]-obs3[1], 2) < pow(obs3[2]*tol, 2) )
+            if ( pow(Q->values[0]-obs3[0], 2) + pow(Q->values[1]-obs3[1], 2) < pow((obs3[2]+CLEARANCE)*tol, 2) )
                 return false;
 
             return true;

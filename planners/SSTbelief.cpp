@@ -261,12 +261,6 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
     Vector x_ng(2);
     retrieveStateVector(nmotion->state_, x_ng);
 
-    // Create new motion
-    auto *motion = new Motion(si_);
-
-    // Sample time step
-    dt = maxTimeStep_/2; //rng_.uniformReal(0, maxTimeStep_);
-
     // Sample control
     Vector u(2);
     u[0] = rng_.uniformReal(0, maxVelocity_);
@@ -274,42 +268,63 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
 
     Vector MeanState(2, 0); // Should be removed when including clustering
     int numSuccess_particles = 0;
-    for (int i = 0; i < maxNumParticles_; i++) {
+    Matrix Pa;
+    for (int i = 0; i < MAXNUMPARTICLES; i++) {
         // randomly pick a particle and propagate
         int l = rng_.uniformInt(0, nmotion->nParticles_-1);
 
-        // Take a step from a particle with dt and control u
-        Vector x_new = prop(nmotion->particles[l], u, dt);
+        // Take a step from a particle with DT and control u
+        Vector x_new = prop(nmotion->particles[l], u, DT);
         updateStateVector(xstate, x_new);
         updateStateVector(wstate, nmotion->particles[l]);
         if (!si_->satisfiesBounds(xstate) || !si_->checkMotion(wstate, xstate)) // Verify that propagation is within the bounds and collision free
             continue;
 
-        motion->particles.push_back(x_new);
+        Pa.push_back(x_new);
         numSuccess_particles++;
 
         MeanState[0] += x_new[0];
         MeanState[1] += x_new[1];
     } 
 
-    if (numSuccess_particles == 0/*< 0.15 * nmotion->nParticles_*/) { // If could not propagate enough (less than 15% of the neighbors particles)
-        delete motion;
-        return nullptr;
-    }
-
-    // vector<cluster> C = getClusters(motion->particles);
-    // cout << C.size() << endl;
-    motion->nParticles_ = numSuccess_particles;
-    motion->action.push_back(u[0]);
-    motion->action.push_back(u[1]);
-    MeanState[0] /= motion->nParticles_;
-    MeanState[1] /= motion->nParticles_;
-    updateStateVector(motion->state_, MeanState);
-
     si_->freeState(xstate);
     si_->freeState(wstate);
 
-    return motion;
+    if (numSuccess_particles > 0){//.1 * MAXNUMPARTICLES) { // If could not propagate enough (less than 10% of MAXNUMPARTICLES particles)
+
+        cluster C = meanshift(Pa, CLEARANCE, 0.001);
+        // cout << "------\n";
+        // cout << Pa.size() << " " << C.points.size() << endl;
+        // cout << C.centroid[0] << " " << C.centroid[1] << endl;
+        // cout << MeanState[0] / Pa.size() << " " << MeanState[1] / Pa.size() << endl;
+
+        // if (C.stddev > 100) 
+        //     return nullptr;
+
+        // Bias toward more qualitative nodes
+        double prob = nmotion->probability_ * double(C.points.size()) / MAXNUMPARTICLES;
+        // double qual;
+        // if (fabs(min_probability_- 1.) < 1e-3)
+        //     qual = prob; //pow(motion->probability_, 1.0/(nmotion->nodesFromRoot_+1))
+        // else
+        //     qual = (prob - min_probability_) / (1. - min_probability_);
+        if (prob < rng_.uniform01()) 
+            return nullptr;
+
+        // Create new motion
+        auto *motion = new Motion(si_);
+        motion->particles = C.points;
+        motion->nParticles_ = C.points.size();
+        motion->action.push_back(u[0]);
+        motion->action.push_back(u[1]);
+        motion->probability_ = prob;
+        // motion->quality_ = qual;
+        updateStateVector(motion->state_, C.centroid);
+
+        return motion;
+    }
+
+    return nullptr;
 }
 
 ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTerminationCondition &ptc)
@@ -371,23 +386,11 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         // dstate = monteCarloProp(nmotion);
         auto *motion = ParticlesProp(nmotion); // Propagation already creates a motion, if enough particles
 
-        // Bias toward more qualitative nodes
-        if (motion != nullptr) {
-            motion->probability_ = nmotion->probability_ * double(motion->nParticles_) / maxNumParticles_;
-            if (min_probability_ == 1.)
-                motion->quality_ = motion->probability_; //pow(motion->probability_, 1.0/(nmotion->nodesFromRoot_+1))
-            else
-                motion->quality_ = (motion->probability_ - min_probability_) / (1. - min_probability_);
-            if (motion->quality_ < rng_.uniform01()) {
-                delete motion;
-                motion = nullptr;
-            }
-        }
-
         if (motion != nullptr)
         {
             base::Cost incCost = opt_->combineCosts( opt_->motionCost(nmotion->state_, motion->state_), opt_->costToGo(motion->state_, goal) ); // c + h
             base::Cost cost = opt_->combineCosts(nmotion->rootToStateCost_, incCost);
+            cost = opt_->combineCosts(cost, ob::Cost(10. / motion->probability_));
             Witness *closestWitness = findClosestWitness(motion);
 
             if (closestWitness->rep_ == motion || opt_->isCostBetterThan(cost, closestWitness->rep_->accCost_))
@@ -552,7 +555,7 @@ void ompl::geometric::SST::sampleParticles4Motion(Motion *motion) {
     // Gen initial particles
     Vector s(2);
     retrieveStateVector(motion->state_, s);
-    for (int i = 0; i < maxNumParticles_; i++)
+    for (int i = 0; i < MAXNUMPARTICLES; i++)
         motion->particles.push_back({rng_.gaussian(s[0], motion->stddev[0]), rng_.gaussian(s[1], motion->stddev[1])});
 }
 
@@ -617,7 +620,7 @@ void ompl::geometric::SST::simulate(Motion *solution) {
     TS << x[0] << " " << x[1] << endl;
 
     for (int i = 0; i < U.size(); i++) {
-        x = prop(x, U[i], dt);
+        x = prop(x, U[i], DT);
         TS << x[0] << " " << x[1] << endl;
     }
 
