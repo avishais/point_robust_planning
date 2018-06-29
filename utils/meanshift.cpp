@@ -101,6 +101,7 @@ Vector MeanShift::meanshift(Matrix points) {
         x_prev = x;
         // Points within a radius around the current point
         Matrix M = naiveNN_radius(x, points);
+
         // Shift the current point
         x = shift_point(x, M);
 
@@ -115,8 +116,17 @@ cluster MeanShift::meanshift(Matrix points, double r, double eps) {
     eps_sqr = eps * eps;
     R_sqr = r * r;
 
-    Matrix M = naiveNN_radius(meanshift(points), points);
-    
+    Vector x = meanshift(points);
+
+    Matrix M = naiveNN_radius(x, points);
+    if (M.size()==0) {
+        cout << "po: " << points.size() << endl;
+        cout << "Ms: " << M.size() << endl;
+        Vector m = mean(points);
+        cout << m[0] << " " << m[1] << endl;
+        cout << x[0] << " " << x[1] << endl;
+    }
+
     cluster C;
     C.init(M[0].size(), M.size());
     C.points = M;

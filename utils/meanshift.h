@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 
+#define Ln cout << __LINE__ << endl;
+
 using namespace std;
 
 typedef vector< double > Vector;

@@ -264,7 +264,6 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
     u[0] = rng_.uniformReal(0, maxVelocity_);
     u[1] = rng_.uniformReal(-PI, PI);
 
-    Vector MeanState(2, 0); // Should be removed when including clustering
     int numSuccess_particles = 0;
     Matrix Pa;
     for (int i = 0; i < MAXNUMPARTICLES; i++) {
@@ -280,9 +279,6 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
 
         Pa.push_back(x_new);
         numSuccess_particles++;
-
-        MeanState[0] += x_new[0];
-        MeanState[1] += x_new[1];
     } 
 
     si_->freeState(xstate);
@@ -291,10 +287,6 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
     if (numSuccess_particles > 0){//.1 * MAXNUMPARTICLES) { // If could not propagate enough (less than 10% of MAXNUMPARTICLES particles)
 
         cluster C = meanshift(Pa, CLEARANCE, 0.001);
-        // cout << "------\n";
-        // cout << Pa.size() << " " << C.points.size() << endl;
-        // cout << C.centroid[0] << " " << C.centroid[1] << endl;
-        // cout << MeanState[0] / Pa.size() << " " << MeanState[1] / Pa.size() << endl;
 
         // if (C.stddev > 100) 
         //     return nullptr;
