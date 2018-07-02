@@ -44,7 +44,7 @@
 
 #include "SSTbelief.h"
 
-ompl::geometric::SST::SST(const base::SpaceInformationPtr &si) : base::Planner(si, "SST")
+ompl::geometric::SST::SST(const base::SpaceInformationPtr &si, Matrix ref_path) : base::Planner(si, "SST")
 {
     specs_.approximateSolutions = true;
     specs_.directed = true;
@@ -55,6 +55,9 @@ ompl::geometric::SST::SST(const base::SpaceInformationPtr &si) : base::Planner(s
     Planner::declareParam<double>("selection_radius", this, &SST::setSelectionRadius, &SST::getSelectionRadius, "0.:.1:"
                                                                                                                 "100");
     Planner::declareParam<double>("pruning_radius", this, &SST::setPruningRadius, &SST::getPruningRadius, "0.:.1:100");
+
+    // Set the reference path
+    setReferencePath(ref_path);
 }
 
 ompl::geometric::SST::~SST()

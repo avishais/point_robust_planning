@@ -135,16 +135,7 @@ void DrawCircle(Vector c, int num_segments) {
     glEnd();
 }
 
-void KeyboardCB(unsigned char key, int x, int y) 
-{
-	switch(key)
-	{
-	case 'q':
-		exit(0);
-	}
 
-	glutPostRedisplay();
-}
 
 void display() {
    glClearColor(1.0f, 1.0f, 1.0f, 0.0f); // Set background color to white and not opaque
@@ -216,6 +207,23 @@ void display() {
     // }
 
     glFlush();  // Render now
+}
+
+void KeyboardCB(unsigned char key, int x, int y) 
+{
+	switch(key)
+	{
+	case 'q':
+		exit(0);
+    case 'r':
+        cout << "Reloading data...\n";
+        get_path_data();
+        get_sim_path_data();
+        display();
+        break;
+	}
+
+	glutPostRedisplay();
 }
 
 

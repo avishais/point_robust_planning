@@ -36,7 +36,7 @@
 
 #include "plan.h"
 
-ob::PlannerPtr plan_C::allocatePlanner(ob::SpaceInformationPtr si, plannerType p_type)
+ob::PlannerPtr plan_C::allocatePlanner(ob::SpaceInformationPtr si, Matrix ref_path, plannerType p_type)
 {
     switch (p_type)
     {
@@ -47,7 +47,7 @@ ob::PlannerPtr plan_C::allocatePlanner(ob::SpaceInformationPtr si, plannerType p
         // }
 		case PLANNER_SST:
         {
-            return std::make_shared<og::SST>(si); 
+            return std::make_shared<og::SST>(si, ref_path); 
             break;
         }
         default:
@@ -59,7 +59,7 @@ ob::PlannerPtr plan_C::allocatePlanner(ob::SpaceInformationPtr si, plannerType p
     }
 }
 
-void plan_C::plan(Vector c_start, Vector c_goal, double runtime, plannerType ptype, double max_step) {
+void plan_C::plan(Matrix ref_path, double runtime, plannerType ptype, double max_step) {
 
 	// construct the state space we are planning inz
 	ob::StateSpacePtr Q(new ob::RealVectorStateSpace(2)); 
@@ -87,14 +87,14 @@ void plan_C::plan(Vector c_start, Vector c_goal, double runtime, plannerType pty
 
 	// create start state
 	ob::ScopedState<ob::RealVectorStateSpace> start(Cspace);
-	for (int i = 0; i < c_start.size(); i++) {
-		start->as<ob::RealVectorStateSpace::StateType>()->values[i] = c_start[i]; // Access the first component of the start a-state
+	for (int i = 0; i < ref_path.front().size(); i++) {
+		start->as<ob::RealVectorStateSpace::StateType>()->values[i] = ref_path.front()[i]; // Access the first component of the start a-state
 	}
 
 	// create goal state
 	ob::ScopedState<ob::RealVectorStateSpace> goal(Cspace);
-	for (int i = 0; i < c_goal.size(); i++) {
-		goal->as<ob::RealVectorStateSpace::StateType>()->values[i] = c_goal[i]; // Access the first component of the goal a-state
+	for (int i = 0; i < ref_path.back().size(); i++) {
+		goal->as<ob::RealVectorStateSpace::StateType>()->values[i] = ref_path.back()[i]; // Access the first component of the goal a-state
 	}
 
 	// create a problem instance
@@ -110,7 +110,7 @@ void plan_C::plan(Vector c_start, Vector c_goal, double runtime, plannerType pty
 	maxStep = max_step;
 	// create a planner for the defined space
 	// To add a planner, the #include library must be added above
-	ob::PlannerPtr planner = allocatePlanner(si, ptype);
+	ob::PlannerPtr planner = allocatePlanner(si, ref_path, ptype);
 
 	// set the problem we are trying to solve for the planner
 	planner->setProblemDefinition(pdef);
@@ -146,7 +146,7 @@ void plan_C::plan(Vector c_start, Vector c_goal, double runtime, plannerType pty
 		myfile.open("./path/path.txt");
 		og::PathGeometric& pog = static_cast<og::PathGeometric&>(*path); // Transform into geometric path class
 		pog.printAsMatrix(myfile); // Print as matrix to file
-		myfile << c_goal[0] << " " << c_goal[1] << endl;
+		myfile << ref_path.back()[0] << " " << ref_path.back()[1] << endl;
 		myfile.close();
 
 		std::cout << "Found solution:" << std::endl;
@@ -209,11 +209,9 @@ int main(int argn, char ** args) {
 
 	srand (time(NULL));
 
-	Vector c_start, c_goal;
-	c_start = {-8, -7};
-	c_goal = {7, 7};
+	Matrix ref_path = {{-8, 7}, {-8, 0}, {-0.5, 6}, {7, 7}};
 		
-	Plan.plan(c_start, c_goal, runtime, ptype, 0.5);
+	Plan.plan(ref_path, runtime, ptype, 0.5);
 
 	std::cout << std::endl << std::endl;
 

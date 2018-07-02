@@ -69,7 +69,7 @@ namespace ompl
         {
         public:
             /** \brief Constructor */
-            SST(const base::SpaceInformationPtr &si);
+            SST(const base::SpaceInformationPtr &si, Matrix);
 
             ~SST() override;
 

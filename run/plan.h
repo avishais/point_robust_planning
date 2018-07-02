@@ -21,7 +21,7 @@
 #ifdef SSTA
 	#include "SST.h"
 #else
-	#include "SSTbeliefClus.h"
+	#include "SSTbelief.h"
 #endif
 
 // Standard libraries
@@ -53,11 +53,11 @@ class plan_C
 {
 public:
 
-	void plan(Vector, Vector, double, plannerType = PLANNER_RRT, double = 2);
+	void plan(Matrix, double, plannerType = PLANNER_RRT, double = 2);
 
 	// Construct the planner specified by our command line argument.
 	// This helper function is simply a switch statement.
-	ob::PlannerPtr allocatePlanner(ob::SpaceInformationPtr, plannerType);
+	ob::PlannerPtr allocatePlanner(ob::SpaceInformationPtr, Matrix, plannerType);
 
 	bool solved_bool;
 	double total_runtime;
