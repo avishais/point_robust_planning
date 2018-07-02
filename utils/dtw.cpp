@@ -87,6 +87,10 @@ Matrix DTW::oversampling(Matrix s) {
 	for (int i = 1; i < s.size(); i++) {
 		// Interpolate segment
 		double l = norm(s[i], s[i-1]);
+		if (l < .1*dl_) {
+			S.push_back( s[i-1] );
+			continue;
+		}
 		int n = l / dl_ + 1;
 		for (int j = 0; j < n; j++) {
 			double g = (j*dl_) / l;
@@ -159,8 +163,8 @@ double DTW::dtwDist( Matrix t ) {
 
 
 // int main() {
-// 	Matrix s1 = {{0, 0},{1, 1},{2, 1.5},{3, 1.5},{8, 1.5},{10, 1.75},{12, 0}};
-// 	Matrix s2 = {{0, 0},{0.5, 0.5},{1, 1},{2, 1.2},{3, 1.5},{4, 1.5},{5, 1.5},{6.2, 1.5},{8, 1.5},{10, 1.75},{12, 0}}; 
+// 	Matrix s1 = {{0, 0},{1, 1},{3, 1.5},{3, 1.5},{8, 1.5},{10, 1.5},{12, 0}};
+// 	Matrix s2 = {{0, 0},{0.5, 0.5},{1, 1},{1.8, 1.2},{3, 1.5},{4, 1.5},{5, 1.5},{6.2, 1.5},{8, 1.5},{10, 1.5},{12, 0}}; 
 
 // 	DTW T;
 // 	T.setReferencePath(s1);
