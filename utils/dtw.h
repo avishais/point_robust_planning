@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <math.h>
 
 
 using namespace std;
@@ -26,13 +27,28 @@ public:
 	int min( int x, int y, int z );
 	double min( double x, double y, double z );
 	double normSq(Vector p1, Vector p2);
+	double norm(Vector p1, Vector p2);
 
-	DTW() {};
+	DTW() { set_dl(0.2); };
 	~DTW() {};
 
-	double dtwDist( Matrix s1, Matrix s2 );
-
+	double dtwDist( Matrix, Matrix );
+	double dtwDist( Matrix );
 	void getOptPath(Matrix, Matrix, Matrix);
+	Matrix oversampling(Matrix s);
+
+	void setReferencePath(Matrix r) {
+		r_ = oversampling(r);
+	}
+
+private:
+	double dl_;
+	void set_dl(double dl) {
+		dl_ = dl;
+	}
+	
+	Matrix r_; // Reference path to be used if set
+
 
 };
 

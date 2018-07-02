@@ -43,6 +43,7 @@
 
 #include "mySetup.h"
 #include "meanshift.h"
+#include "dtw.h"
 #include <fstream>
 
 #define MAXNUMPARTICLES 500
@@ -64,7 +65,7 @@ namespace ompl
            Asymptotically Optimal Sampling-based Kinodynamic Planning.
            [[PDF]](http://arxiv.org/abs/1407.2896)
         */
-        class SST : public base::Planner, public gen_system, public MeanShift
+        class SST : public base::Planner, public gen_system, public MeanShift, public DTW
         {
         public:
             /** \brief Constructor */
