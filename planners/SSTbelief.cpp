@@ -56,7 +56,7 @@ ompl::geometric::SST::SST(const base::SpaceInformationPtr &si, Matrix ref_path) 
                                                                                                                 "100");
     Planner::declareParam<double>("pruning_radius", this, &SST::setPruningRadius, &SST::getPruningRadius, "0.:.1:100");
 
-    // Set the reference path
+    // Set the reference path for the DTW cost calculation
     setReferencePath(ref_path);
 }
 
@@ -295,7 +295,7 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
         //     return nullptr;
 
         // Bias toward more qualitative nodes
-        double prob = nmotion->probability_ * double(C.points.size()) / MAXNUMPARTICLES;
+        double prob = 1;//nmotion->probability_ * double(C.points.size()) / MAXNUMPARTICLES;
         // double qual;
         // if (fabs(min_probability_- 1.) < 1e-3)
         //     qual = prob; //pow(motion->probability_, 1.0/(nmotion->nodesFromRoot_+1))
@@ -320,6 +320,26 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
     return nullptr;
 }
 
+// Uses this function to compute the path cost since it is not easily possible to add a custom function to the OptimizationObjective class
+ompl::base::Cost ompl::geometric::SST::stateCostPath(Motion *motion, Motion *emotion) {
+
+    // Get path from new motion
+    Matrix P;
+    Vector v(2);
+    if (emotion != nullptr) {
+        retrieveStateVector(emotion->state_, v);
+        P.push_back(v);
+    }
+    Motion *tmotion = motion;
+    while (tmotion != nullptr) {
+        retrieveStateVector(tmotion->state_, v);
+        P.insert(P.begin(), v);
+        tmotion = tmotion->parent_;
+    }
+
+    return ob::Cost(dtwDist(P));
+}
+
 ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTerminationCondition &ptc)
 {
     
@@ -333,7 +353,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         auto *motion = new Motion(si_);
         si_->copyState(motion->state_, st);
         sampleParticles4Motion(motion);
-        motion->accCost_ = opt_->combineCosts( opt_->identityCost(), opt_->costToGo(motion->state_, goal) );
+        motion->accCost_ = opt_->identityCost();//opt_->combineCosts( opt_->identityCost(), opt_->costToGo(motion->state_, goal) );
         motion->rootToStateCost_ = opt_->identityCost();
         motion->probability_ = 1;
         motion->quality_ = 1;
@@ -383,16 +403,16 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
 
         if (motion != nullptr)
         {
-            base::Cost incCost = opt_->combineCosts( opt_->motionCost(nmotion->state_, motion->state_), opt_->costToGo(motion->state_, goal) ); // c + h
-            base::Cost cost = opt_->combineCosts(nmotion->rootToStateCost_, incCost);
-            cost = opt_->combineCosts(cost, ob::Cost(10. / motion->probability_));
+            // base::Cost incCost = opt_->combineCosts( opt_->motionCost(nmotion->state_, motion->state_), opt_->costToGo(motion->state_, goal) ); // c + h
+            base::Cost cost = stateCostPath(nmotion, motion);//opt_->combineCosts(nmotion->rootToStateCost_, incCost);
+            // cost = opt_->combineCosts(cost, ob::Cost(10. / motion->probability_));
             Witness *closestWitness = findClosestWitness(motion);
 
             if (closestWitness->rep_ == motion || opt_->isCostBetterThan(cost, closestWitness->rep_->accCost_))
             {
                 Motion *oldRep = closestWitness->rep_;
                 motion->accCost_ = cost;
-                motion->rootToStateCost_ = opt_->combineCosts( nmotion->rootToStateCost_, opt_->motionCost(nmotion->state_, motion->state_) );
+                // motion->rootToStateCost_ = opt_->combineCosts( nmotion->rootToStateCost_, opt_->motionCost(nmotion->state_, motion->state_) );
                 motion->parent_ = nmotion;
                 nmotion->numChildren_++;
                 motion->nodesFromRoot_ = nmotion->nodesFromRoot_ + 1;
@@ -557,10 +577,11 @@ void ompl::geometric::SST::sampleParticles4Motion(Motion *motion) {
 
 void ompl::geometric::SST::listTree() {
 
-    std::ofstream TF, TP, TM;
+    std::ofstream TF, TP, TM, RP;
 	TF.open("./path/tree.txt");
     TP.open("./path/particles.txt");
     TM.open("./path/motions.txt");
+    RP.open("./path/ref_path.txt");
 
     std::vector<Motion*> motions;
 	nn_->list(motions);
@@ -587,9 +608,13 @@ void ompl::geometric::SST::listTree() {
         } 
     }
 
+    for (int i = 0; i < r_.size(); i++) 
+        RP << r_[i][0] << " " << r_[i][1] << endl;
+
     TF.close();
     TP.close();
     TM.close();
+    RP.close();
 }
 
 void ompl::geometric::SST::simulate(Motion *solution) {

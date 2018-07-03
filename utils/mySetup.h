@@ -36,7 +36,7 @@ typedef vector<vector< double >> Matrix;
 class LengthObjective : public ob::OptimizationObjective
 {
 public:
-	LengthObjective(const ob::SpaceInformationPtr& si) : ob::OptimizationObjective(si) {
+	LengthObjective(const ob::SpaceInformationPtr& si, Matrix ref_path) : ob::OptimizationObjective(si) {
         // Setup a default cost-to-go heuristics:
         setCostToGoHeuristic(ob::goalRegionCostToGo);
     }
@@ -78,17 +78,17 @@ public:
     // circular obstacle
     bool isValid(const ob::State* state) const
     {
-        	const ob::RealVectorStateSpace::StateType *Q = state->as<ob::RealVectorStateSpace::StateType>();
-            double tol = 1.0;
+        const ob::RealVectorStateSpace::StateType *Q = state->as<ob::RealVectorStateSpace::StateType>();
+        double tol = 1.0;
 
-            if ( pow(Q->values[0]-obs1[0], 2) + pow(Q->values[1]-obs1[1], 2) < pow((obs1[2]+CLEARANCE)*tol, 2) )
-                return false;
-            if ( pow(Q->values[0]-obs2[0], 2) + pow(Q->values[1]-obs2[1], 2) < pow((obs2[2]+CLEARANCE)*tol, 2) )
-                return false;
-            if ( pow(Q->values[0]-obs3[0], 2) + pow(Q->values[1]-obs3[1], 2) < pow((obs3[2]+CLEARANCE)*tol, 2) )
-                return false;
+        if ( pow(Q->values[0]-obs1[0], 2) + pow(Q->values[1]-obs1[1], 2) < pow((obs1[2]+CLEARANCE)*tol, 2) )
+            return false;
+        if ( pow(Q->values[0]-obs2[0], 2) + pow(Q->values[1]-obs2[1], 2) < pow((obs2[2]+CLEARANCE)*tol, 2) )
+            return false;
+        if ( pow(Q->values[0]-obs3[0], 2) + pow(Q->values[1]-obs3[1], 2) < pow((obs3[2]+CLEARANCE)*tol, 2) )
+            return false;
 
-            return true;
+        return true;
     }
 
     Vector obs1, obs2, obs3;
@@ -121,8 +121,8 @@ public:
     Vector prop(Vector x, Vector u, double dt) {
         Vector x_next(2);
 
-        u[0] += rng_.gaussian(0, .05);
-        u[1] += rng_.gaussian(0, .05);   
+        // u[0] += rng_.gaussian(0, .05);
+        // u[1] += rng_.gaussian(0, .05);   
 
         Vector f = f_func(x, u);
 

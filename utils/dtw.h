@@ -10,6 +10,7 @@
 #include <vector>
 #include <math.h>
 
+#define LN cout << __LINE__ << endl;
 
 using namespace std;
 
@@ -24,22 +25,25 @@ public:
 	enum {
 		INF = 100000000
 	};
-	int min( int x, int y, int z );
-	double min( double x, double y, double z );
-	double normSq(Vector p1, Vector p2);
-	double norm(Vector p1, Vector p2);
+	int min( int x, int y, int z ) const;
+	double min( double x, double y, double z ) const;
+	double normSq(Vector p1, Vector p2) const;
+	double norm(Vector p1, Vector p2) const;
 
-	DTW() { set_dl(0.2); };
+	DTW() { set_dl(0.3); };
 	~DTW() {};
 
 	double dtwDist( Matrix, Matrix );
-	double dtwDist( Matrix );
+	double dtwDist( Matrix ) const;
 	void getOptPath(Matrix, Matrix, Matrix);
-	Matrix oversampling(Matrix s);
+	Matrix oversampling(Matrix) const;
+	int trim(Matrix) const;
 
 	void setReferencePath(Matrix r) {
 		r_ = oversampling(r);
 	}
+
+	Matrix r_; // Reference path to be used if set
 
 private:
 	double dl_;
@@ -47,8 +51,5 @@ private:
 		dl_ = dl;
 	}
 	
-	Matrix r_; // Reference path to be used if set
-
-
 };
 

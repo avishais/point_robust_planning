@@ -347,8 +347,8 @@ namespace ompl
             /** Minimum probability in tree */
             double min_probability_{1.}; 
 
-            /** Time step for propagation */
-            // double dt;        
+            /** Uses this function to compute the path cost since it is not easily possible to add a custom function to the OptimizationObjective class */
+            base::Cost stateCostPath(Motion *, Motion *);
         };
     }
 }

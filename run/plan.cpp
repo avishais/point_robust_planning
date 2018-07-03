@@ -105,7 +105,7 @@ void plan_C::plan(Matrix ref_path, double runtime, plannerType ptype, double max
 	pdef->print();
 
 	// Set the optimization objective
-	pdef->setOptimizationObjective( ob::OptimizationObjectivePtr(new LengthObjective(si)) );
+	pdef->setOptimizationObjective( ob::OptimizationObjectivePtr(new LengthObjective(si, ref_path)) );
 
 	maxStep = max_step;
 	// create a planner for the defined space
@@ -209,7 +209,7 @@ int main(int argn, char ** args) {
 
 	srand (time(NULL));
 
-	Matrix ref_path = {{-8, 7}, {-8, 0}, {-0.5, 6}, {7, 7}};
+	Matrix ref_path = {{-8, -7}, {-8, 0}, {-0.5, 6}, {7, 7}};
 		
 	Plan.plan(ref_path, runtime, ptype, 0.5);
 

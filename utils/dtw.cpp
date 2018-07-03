@@ -1,18 +1,18 @@
 #include "dtw.h"
 
-int DTW::min( int x, int y, int z ) {
+int DTW::min( int x, int y, int z ) const {
 	if( ( x <= y ) && ( x <= z ) ) return x;
 	if( ( y <= x ) && ( y <= z ) ) return y;
 	if( ( z <= x ) && ( z <= y ) ) return z;
 }
 
-double DTW::min( double x, double y, double z ) {
+double DTW::min( double x, double y, double z ) const {
 	if( ( x <= y ) && ( x <= z ) ) return x;
 	if( ( y <= x ) && ( y <= z ) ) return y;
 	if( ( z <= x ) && ( z <= y ) ) return z;
 }
 
-double DTW::normSq(Vector p1, Vector p2) {
+double DTW::normSq(Vector p1, Vector p2) const {
 	double sum = 0;
 	
 	for (int i = 0; i < p1.size(); i++)
@@ -21,7 +21,7 @@ double DTW::normSq(Vector p1, Vector p2) {
 	return sum;
 }
 
-double DTW::norm(Vector p1, Vector p2) {
+double DTW::norm(Vector p1, Vector p2) const {
 	double sum = 0;
 	
 	for (int i = 0; i < p1.size(); i++)
@@ -81,7 +81,7 @@ void initMatrix(Matrix &M, int m, int n) {
 		M[i].resize(n);
 } 
 
-Matrix DTW::oversampling(Matrix s) {
+Matrix DTW::oversampling(Matrix s) const {
 
 	Matrix S;
 	for (int i = 1; i < s.size(); i++) {
@@ -130,12 +130,27 @@ double DTW::dtwDist( Matrix r, Matrix t ) {
 	return D[M-1][N-1];
 }
 
+// Return the index of the closest point on the r_ path to the last point in t
+int DTW::trim(Matrix t) const {
+
+	int i_min, Min = 1e6;
+	for (int i = 0; i < r_.size(); i++) {
+		double d = norm(r_[i], t.back());
+		if (d < Min) {
+			Min = d;
+			i_min = i;
+		}
+	}
+
+	return i_min+1;
+}
+
 // To be used with the reference path of the class
-double DTW::dtwDist( Matrix t ) {
+double DTW::dtwDist( Matrix t ) const {
 
 	Matrix t_os = oversampling(t);
 
-	int M = r_.size();
+	int M = trim(t_os);//r_.size();
 	int N = t_os.size();
 
 	Matrix d;
