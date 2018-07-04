@@ -35,9 +35,10 @@ public:
 
 	double dtwDist( Matrix, Matrix );
 	double dtwDist( Matrix ) const;
+	double dtwToGo( Vector );
 	void getOptPath(Matrix, Matrix, Matrix);
 	Matrix oversampling(Matrix) const;
-	int trim(Matrix) const;
+	int trim(Vector) const;
 
 	void setReferencePath(Matrix r) {
 		r_ = oversampling(r);

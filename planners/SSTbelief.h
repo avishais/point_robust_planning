@@ -349,6 +349,9 @@ namespace ompl
 
             /** Uses this function to compute the path cost since it is not easily possible to add a custom function to the OptimizationObjective class */
             base::Cost stateCostPath(Motion *, Motion *);
+
+            /** Heuristic cost to goal */
+            base::Cost stateHeuristicCostPath(Motion *motion);
         };
     }
 }

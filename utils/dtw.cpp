@@ -130,19 +130,38 @@ double DTW::dtwDist( Matrix r, Matrix t ) {
 	return D[M-1][N-1];
 }
 
+double DTW::dtwToGo( Vector s ) {
+
+	int j = trim(s);
+
+	double sum = 0;
+	int k = 0;
+	for (int i = j; i < r_.size(); i++) {
+		double l2 = normSq(r_[i], s);
+		sum += l2 - dl_*k;
+		double gamma = dl_/sqrt(l2);
+		for (int a = 0; a < s.size(); a++)
+			s[a] += gamma * (r_[i][a]-s[a]);
+		k++;
+	}
+
+	return sum;
+}
+
+
 // Return the index of the closest point on the r_ path to the last point in t
-int DTW::trim(Matrix t) const {
+int DTW::trim(Vector t) const {
 
 	int i_min, Min = 1e6;
 	for (int i = 0; i < r_.size(); i++) {
-		double d = norm(r_[i], t.back());
+		double d = norm(r_[i], t);
 		if (d < Min) {
 			Min = d;
 			i_min = i;
 		}
 	}
 
-	return i_min+1;
+	return i_min;
 }
 
 // To be used with the reference path of the class
@@ -150,7 +169,7 @@ double DTW::dtwDist( Matrix t ) const {
 
 	Matrix t_os = oversampling(t);
 
-	int M = trim(t_os);//r_.size();
+	int M = trim(t_os.back()) + 1;//r_.size();
 	int N = t_os.size();
 
 	Matrix d;

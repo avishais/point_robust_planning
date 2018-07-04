@@ -340,6 +340,14 @@ ompl::base::Cost ompl::geometric::SST::stateCostPath(Motion *motion, Motion *emo
     return ob::Cost(dtwDist(P));
 }
 
+ompl::base::Cost ompl::geometric::SST::stateHeuristicCostPath(Motion *motion) {
+
+    Vector s(2);
+    retrieveStateVector(motion->state_, s);
+
+    return ob::Cost(dtwToGo(s));
+}
+
 ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTerminationCondition &ptc)
 {
     
@@ -353,7 +361,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         auto *motion = new Motion(si_);
         si_->copyState(motion->state_, st);
         sampleParticles4Motion(motion);
-        motion->accCost_ = opt_->identityCost();//opt_->combineCosts( opt_->identityCost(), opt_->costToGo(motion->state_, goal) );
+        motion->accCost_ = opt_->combineCosts( opt_->identityCost(), stateHeuristicCostPath(motion) );
         motion->rootToStateCost_ = opt_->identityCost();
         motion->probability_ = 1;
         motion->quality_ = 1;
