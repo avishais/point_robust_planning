@@ -17,6 +17,9 @@
 #include <stdlib.h>
 #include <vector>
 
+#include <chrono>  // for high_resolution_clock
+typedef std::chrono::high_resolution_clock Clock;
+
 #define LN cout << __LINE__ << endl;
 
 // Environment parameters
@@ -78,7 +81,7 @@ public:
     // circular obstacle
     bool isValid(const ob::State* state) const
     {
-        return true;
+        // return true;
         const ob::RealVectorStateSpace::StateType *Q = state->as<ob::RealVectorStateSpace::StateType>();
         double tol = 1.0;
 
@@ -122,8 +125,8 @@ public:
     Vector prop(Vector x, Vector u, double dt) {
         Vector x_next(2);
 
-        // u[0] += rng_.gaussian(0, .05);
-        // u[1] += rng_.gaussian(0, .05);   
+        u[0] += rng_.gaussian(0, .05);
+        u[1] += rng_.gaussian(0, .05);   
 
         Vector f = f_func(x, u);
 

@@ -352,6 +352,12 @@ namespace ompl
 
             /** Heuristic cost to goal */
             base::Cost stateHeuristicCostPath(Motion *motion);
+
+            /** ----------- Benchmark times ------------- */
+            double T_dtw = 0;
+            double T_dtwH = 0;
+            double T_meanShift = 0;
+
         };
     }
 }

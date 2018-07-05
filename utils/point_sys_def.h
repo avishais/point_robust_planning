@@ -5,4 +5,4 @@
 #define OBS2 {-4, 4, 2.2};
 #define OBS3 {4, -4, 2.2};
 
-#define CLEARANCE 0.4
+#define CLEARANCE 0.5

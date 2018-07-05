@@ -289,13 +289,15 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
 
     if (numSuccess_particles > 0){//.1 * MAXNUMPARTICLES) { // If could not propagate enough (less than 10% of MAXNUMPARTICLES particles)
 
+        auto sT = Clock::now();
         cluster C = meanshift(Pa, CLEARANCE, 0.001);
+        T_meanShift += std::chrono::duration<double>(Clock::now() - sT).count();
 
         // if (C.stddev > 100) 
         //     return nullptr;
 
         // Bias toward more qualitative nodes
-        double prob = 1;//nmotion->probability_ * double(C.points.size()) / MAXNUMPARTICLES;
+        double prob = nmotion->probability_ * double(C.points.size()) / MAXNUMPARTICLES;
         // double qual;
         // if (fabs(min_probability_- 1.) < 1e-3)
         //     qual = prob; //pow(motion->probability_, 1.0/(nmotion->nodesFromRoot_+1))
@@ -323,6 +325,8 @@ ompl::geometric::SST::Motion *ompl::geometric::SST::ParticlesProp(Motion *nmotio
 // Uses this function to compute the path cost since it is not easily possible to add a custom function to the OptimizationObjective class
 ompl::base::Cost ompl::geometric::SST::stateCostPath(Motion *motion, Motion *emotion) {
 
+    auto sT = Clock::now();
+        
     // Get path from new motion
     Matrix P;
     Vector v(2);
@@ -337,15 +341,21 @@ ompl::base::Cost ompl::geometric::SST::stateCostPath(Motion *motion, Motion *emo
         tmotion = tmotion->parent_;
     }
 
-    return ob::Cost(dtwDist(P));
+    double D = dtwDist(P);
+    T_dtw += std::chrono::duration<double>(Clock::now() - sT).count();
+    return ob::Cost(D);
 }
 
 ompl::base::Cost ompl::geometric::SST::stateHeuristicCostPath(Motion *motion) {
 
+    auto sT = Clock::now();
+
     Vector s(2);
     retrieveStateVector(motion->state_, s);
 
-    return ob::Cost(dtwToGo(s));
+    double D2G = dtwToGo(s);
+    T_dtwH += std::chrono::duration<double>(Clock::now() - sT).count();
+    return ob::Cost(D2G);
 }
 
 ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTerminationCondition &ptc)
@@ -415,7 +425,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
             // base::Cost incCost = opt_->combineCosts( opt_->motionCost(nmotion->state_, motion->state_), opt_->costToGo(motion->state_, goal) ); // c + h
             // base::Cost cost = opt_->combineCosts(stateCostPath(nmotion, motion), stateHeuristicCostPath(motion));//opt_->combineCosts(nmotion->rootToStateCost_, incCost);
             base::Cost cost = stateCostPath(nmotion, motion);//opt_->combineCosts(nmotion->rootToStateCost_, incCost);
-            // cost = opt_->combineCosts(cost, ob::Cost(10. / motion->probability_));
+            cost = opt_->combineCosts(cost, ob::Cost(10. / motion->probability_));
             Witness *closestWitness = findClosestWitness(motion);
 
             if (closestWitness->rep_ == motion || opt_->isCostBetterThan(cost, closestWitness->rep_->accCost_))
@@ -540,6 +550,12 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         si_->freeState(rmotion->state_);
     rmotion->state_ = nullptr;
     delete rmotion;
+
+    cout << "-- Benchmark times ------------------------\n";
+    cout << "MeanShift time: " << T_meanShift << " sec.\n";
+    cout << "DTW time:       " << T_dtw << " sec.\n";
+    cout << "DTW_H time:     " << T_dtwH << " sec.\n";    
+    cout << "-------------------------------------------\n";
 
     OMPL_INFORM("%s: Created %u states in %u iterations", getName().c_str(), nn_->size(), iterations);
 
