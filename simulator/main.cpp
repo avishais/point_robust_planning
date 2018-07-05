@@ -218,7 +218,7 @@ void display() {
     glLineWidth(5);
     glEnable(GL_LINE_STIPPLE);
     for (int i = 0; i < ref_path.size()-1; i+=2) {
-        glBegin(GL_LINES);              
+        glBegin(GL_POINTS);              
             glColor3f(0.0f, 0.0f, 1.0f); 
             glVertex2f(ref_path[i][0], ref_path[i][1]);    // x, y
             glVertex2f(ref_path[i+1][0], ref_path[i+1][1]);

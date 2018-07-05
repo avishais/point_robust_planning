@@ -361,7 +361,8 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         auto *motion = new Motion(si_);
         si_->copyState(motion->state_, st);
         sampleParticles4Motion(motion);
-        motion->accCost_ = opt_->combineCosts( opt_->identityCost(), stateHeuristicCostPath(motion) );
+        // motion->accCost_ = opt_->combineCosts( opt_->identityCost(), stateHeuristicCostPath(motion) );
+        motion->accCost_ = opt_->identityCost();
         motion->rootToStateCost_ = opt_->identityCost();
         motion->probability_ = 1;
         motion->quality_ = 1;
@@ -412,6 +413,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         if (motion != nullptr)
         {
             // base::Cost incCost = opt_->combineCosts( opt_->motionCost(nmotion->state_, motion->state_), opt_->costToGo(motion->state_, goal) ); // c + h
+            // base::Cost cost = opt_->combineCosts(stateCostPath(nmotion, motion), stateHeuristicCostPath(motion));//opt_->combineCosts(nmotion->rootToStateCost_, incCost);
             base::Cost cost = stateCostPath(nmotion, motion);//opt_->combineCosts(nmotion->rootToStateCost_, incCost);
             // cost = opt_->combineCosts(cost, ob::Cost(10. / motion->probability_));
             Witness *closestWitness = findClosestWitness(motion);

@@ -111,7 +111,7 @@ double DTW::dtwDist( Matrix r, Matrix t ) {
 	initMatrix(d, M, N);
 	for (int i = 0; i < M; i++)
 		for (int j = 0; j < N; j++)
-			d[i][j] = normSq(r[i], t[j]);
+			d[i][j] = norm(r[i], t[j]);
 
 	Matrix D;
 	initMatrix(D, M, N);
@@ -137,9 +137,9 @@ double DTW::dtwToGo( Vector s ) {
 	double sum = 0;
 	int k = 0;
 	for (int i = j; i < r_.size(); i++) {
-		double l2 = normSq(r_[i], s);
-		sum += l2 - dl_*k;
-		double gamma = dl_/sqrt(l2);
+		double l2 = norm(r_[i], s);
+		sum += 0.5*l2 - dl_*k;
+		double gamma = dl_/l2;
 		for (int a = 0; a < s.size(); a++)
 			s[a] += gamma * (r_[i][a]-s[a]);
 		k++;
@@ -149,12 +149,12 @@ double DTW::dtwToGo( Vector s ) {
 }
 
 
-// Return the index of the closest point on the r_ path to the last point in t
+// Return the index of the closest point on the r_ path to point t
 int DTW::trim(Vector t) const {
 
 	int i_min, Min = 1e6;
 	for (int i = 0; i < r_.size(); i++) {
-		double d = norm(r_[i], t);
+		double d = normSq(r_[i], t);
 		if (d < Min) {
 			Min = d;
 			i_min = i;

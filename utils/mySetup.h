@@ -78,6 +78,7 @@ public:
     // circular obstacle
     bool isValid(const ob::State* state) const
     {
+        return true;
         const ob::RealVectorStateSpace::StateType *Q = state->as<ob::RealVectorStateSpace::StateType>();
         double tol = 1.0;
 

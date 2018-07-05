@@ -30,7 +30,7 @@ public:
 	double normSq(Vector p1, Vector p2) const;
 	double norm(Vector p1, Vector p2) const;
 
-	DTW() { set_dl(0.3); };
+	DTW() { set_dl(0.5); };
 	~DTW() {};
 
 	double dtwDist( Matrix, Matrix );
