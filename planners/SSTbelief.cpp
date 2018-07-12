@@ -343,9 +343,44 @@ ompl::base::Cost ompl::geometric::SST::stateCostPath(Motion *motion, Motion *emo
 
     Matrix P_os = oversampling(P);
 
-    double D = FakeDTW(P_os) + dtwToGo(P_os); //dtwDist(P);
+    // double D = FakeDTW(P_os) + dtwToGo(P_os); //dtwDist(P);
+
+    double D;
+    switch (CostMode) {
+        case 1:
+            D = FakeDTW(P_os); // Only DTW without M>N penalty
+            break;
+        case 2:
+            D = FakeDTW(P_os); // DTW with M>N penalty
+            break;
+        case 3:
+            D = FakeDTW(P_os) + dtwToGo(P_os); // Same as 2 but with DTW2GO - without M>N cost
+            break;
+        case 4:
+            D = FakeDTW(P_os) + dtwToGo(P_os); // Same as 3 but with DTW2GO and with M>N cost
+            break;
+    }
+
     T_dtw += std::chrono::duration<double>(Clock::now() - sT).count();
     return ob::Cost(D);
+}
+
+// Uses this function to compute the path cost since it is not easily possible to add a custom function to the OptimizationObjective class
+double ompl::geometric::SST::CostBM(Motion *motion) {
+
+    // Get path from new motion
+    Matrix P;
+    Vector v(2);
+    Motion *tmotion = motion;
+    while (tmotion != nullptr) {
+        retrieveStateVector(tmotion->state_, v);
+        P.insert(P.begin(), v);
+        tmotion = tmotion->parent_;
+    }
+
+    Matrix P_os = oversampling(P);
+
+    return FakeDTW(P_os); 
 }
 
 ompl::base::Cost ompl::geometric::SST::stateHeuristicCostPath(Motion *motion) {
@@ -408,7 +443,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
 
     auto sT = Clock::now();
     std::ofstream TC;
-	TC.open("./path/cost.txt");
+	TC.open("./path/cost.txt", ios::out | ios::app);
     while (ptc == false)
     {
         /* sample random state (with goal biasing) */
@@ -428,7 +463,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         {
             // base::Cost cost = opt_->combineCosts(stateCostPath(nmotion, motion), stateHeuristicCostPath(motion));
             base::Cost cost = stateCostPath(nmotion, motion);
-            // cost = ob::Cost( cost.value() / motion->probability_);
+            cost = ob::Cost( cost.value() / motion->probability_);
             Witness *closestWitness = findClosestWitness(motion);
 
             if (cost.value() >= 0 && (closestWitness->rep_ == motion || opt_->isCostBetterThan(cost, closestWitness->rep_->accCost_)))
@@ -466,7 +501,9 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                     prevSolutionCost_ = solution->accCost_;
 
                     OMPL_INFORM("Found solution with cost %.2f and (probability, quality) <%.2f, %.2f>", solution->accCost_.value(), solution->probability_, solution->quality_);
-                    TC << std::chrono::duration<double>(Clock::now() - sT).count() << " " << solution->accCost_.value() << " " << solution->probability_ << endl;
+                    
+                    TC << iterations << " " << std::chrono::duration<double>(Clock::now() - sT).count() << " " << CostBM(solution) << " " << solution->accCost_.value() << " " << solution->probability_ << endl;
+                    
                     sufficientlyShort = opt_->isSatisfied(solution->accCost_);
                     if (sufficientlyShort)
                     {
@@ -602,7 +639,7 @@ void ompl::geometric::SST::sampleParticles4Motion(Motion *motion) {
     // Gen initial particles
     Vector s(2);
     retrieveStateVector(motion->state_, s);
-    for (int i = 0; i < MAXNUMPARTICLES; i++)
+    for (int i = 0; i < MAXNUMPARTICLES; i++) 
         motion->particles.push_back({rng_.gaussian(s[0], motion->stddev[0]), rng_.gaussian(s[1], motion->stddev[1])});
 }
 

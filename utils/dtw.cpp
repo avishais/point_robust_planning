@@ -1,5 +1,7 @@
 #include "dtw.h"
 
+extern int CostMode;
+
 int DTW::min( int x, int y, int z ) const {
 	if( ( x <= y ) && ( x <= z ) ) return x;
 	if( ( y <= x ) && ( y <= z ) ) return y;
@@ -183,7 +185,7 @@ double DTW::FakeDTW( Matrix t_os ) const {
 	for (int i = 0; i < std::min(M, N_); i++)
 		D += normSq(r_[i], t_os[i]);
 
-	if (M > N_) {
+	if (CostMode!=1 && M > N_) {
 		D += (M-N_)*dl_ + normSq(r_.back(), t_os.back());
 		// for (int i = M - N; i < M; i++)
 		// 	D += normSq(r_.back(), t_os[i]);
@@ -209,7 +211,7 @@ double DTW::dtwToGo( Matrix t_os ) {
 		}
 	}
 
-	if (M > N_) {
+	if (CostMode==4 && M > N_) {
 		Vector s = r_.back();
 		for (int i = N_; i < t_os.size(); i++) {
 			double l2 = norm(t_os[i], s);

@@ -126,12 +126,12 @@ cluster MeanShift::meanshift(Matrix points, double r, double eps) {
     // C.stddev = stddev(C.points, C.centroid);
 
     Vector m = mean(points);
-    Matrix M = naiveNN_radius(m, points);
+    Matrix M = points;//naiveNN_radius(m, points);
     cluster C;
     C.init(M[0].size(), M.size());
     C.points = M;
     C.centroid = m;
-    C.stddev = stddev(C.points, C.centroid);
+    // C.stddev = stddev(C.points, C.centroid);
 
     return C;
 }

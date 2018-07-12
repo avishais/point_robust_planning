@@ -24,6 +24,8 @@ Matrix path, tree, particles, motions, sim_path, ref_path;
 Vector start(2), goal(2), reached(2);
 double fmax_x = 10., fmin_x = -10., fmax_y = 10., fmin_y = -10.;
 
+bool showParticles = false;
+
 Vector obs1 = OBS1;
 Vector obs2 = OBS2;
 Vector obs3 = OBS3;
@@ -173,13 +175,15 @@ void display() {
 
 
     // Draw particles
-    // glPointSize(2);
-    // for (int i = 0; i < particles.size(); i++) {
-    //     glBegin(GL_POINTS);              
-    //         glColor3f(0.95f, 0.258f, 0.898f); 
-    //         glVertex2f(particles[i][0], particles[i][1]);    // x, y
-    //     glEnd();
-    // }
+    if (showParticles) {
+        glPointSize(2);
+        for (int i = 0; i < particles.size(); i++) {
+            glBegin(GL_POINTS);              
+                glColor3f(0.95f, 0.258f, 0.898f); 
+                glVertex2f(particles[i][0], particles[i][1]);    // x, y
+            glEnd();
+        }
+    }
 
     // Draw path
     glLineWidth(5);
@@ -248,6 +252,15 @@ void KeyboardCB(unsigned char key, int x, int y)
         get_sim_path_data();
         display();
         break;
+    case 'p':
+        showParticles = !showParticles;
+        if (showParticles) {
+            cout << "Loading particles to plot..." << endl;
+            get_particles_data();            
+        }
+        display();
+        break;
+        
 	}
 
 	glutPostRedisplay();

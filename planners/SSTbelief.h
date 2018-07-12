@@ -46,8 +46,9 @@
 #include "dtw.h"
 #include <fstream>
 
-#define MAXNUMPARTICLES 500
 #define DT 0.15
+
+extern int CostMode;
 
 namespace ompl
 {
@@ -352,6 +353,8 @@ namespace ompl
 
             /** Heuristic cost to goal */
             base::Cost stateHeuristicCostPath(Motion *motion);
+
+            double CostBM(Motion *motion);
 
             /** ----------- Benchmark times ------------- */
             double T_dtw = 0;
