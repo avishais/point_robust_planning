@@ -152,8 +152,9 @@ void plan_C::plan(Matrix ref_path, double runtime, plannerType ptype, double max
 		std::cout << "Found solution:" << std::endl;
 		solved_bool = true;
 
-		system("cd simulator && ./viz");
-		system("cd ..");
+		system("cd simulator && ./viz & cd .. &");
+		system("python plotCost.py");
+
 	}
 	else {
 		std::cout << "No solutions found" << std::endl;

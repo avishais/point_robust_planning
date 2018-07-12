@@ -173,13 +173,13 @@ void display() {
 
 
     // Draw particles
-    glPointSize(2);
-    for (int i = 0; i < particles.size(); i++) {
-        glBegin(GL_POINTS);              
-            glColor3f(0.95f, 0.258f, 0.898f); 
-            glVertex2f(particles[i][0], particles[i][1]);    // x, y
-        glEnd();
-    }
+    // glPointSize(2);
+    // for (int i = 0; i < particles.size(); i++) {
+    //     glBegin(GL_POINTS);              
+    //         glColor3f(0.95f, 0.258f, 0.898f); 
+    //         glVertex2f(particles[i][0], particles[i][1]);    // x, y
+    //     glEnd();
+    // }
 
     // Draw path
     glLineWidth(5);
@@ -260,7 +260,7 @@ int main(int argc, char **argv)
 
     get_path_data();
     get_tree_data();
-    get_particles_data();
+    // get_particles_data();
     get_motions_data();
     get_sim_path_data();
     get_ref_path_data();

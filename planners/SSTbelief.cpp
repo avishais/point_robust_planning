@@ -341,7 +341,9 @@ ompl::base::Cost ompl::geometric::SST::stateCostPath(Motion *motion, Motion *emo
         tmotion = tmotion->parent_;
     }
 
-    double D = dtwDist(P);
+    Matrix P_os = oversampling(P);
+
+    double D = FakeDTW(P_os) + dtwToGo(P_os); //dtwDist(P);
     T_dtw += std::chrono::duration<double>(Clock::now() - sT).count();
     return ob::Cost(D);
 }
@@ -353,7 +355,7 @@ ompl::base::Cost ompl::geometric::SST::stateHeuristicCostPath(Motion *motion) {
     Vector s(2);
     retrieveStateVector(motion->state_, s);
 
-    double D2G = dtwToGo(s);
+    double D2G = 0;//dtwToGo(s);
     T_dtwH += std::chrono::duration<double>(Clock::now() - sT).count();
     return ob::Cost(D2G);
 }
@@ -404,7 +406,9 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
 
     unsigned iterations = 0;
 
-
+    auto sT = Clock::now();
+    std::ofstream TC;
+	TC.open("./path/cost.txt");
     while (ptc == false)
     {
         /* sample random state (with goal biasing) */
@@ -422,13 +426,12 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
 
         if (motion != nullptr)
         {
-            // base::Cost incCost = opt_->combineCosts( opt_->motionCost(nmotion->state_, motion->state_), opt_->costToGo(motion->state_, goal) ); // c + h
-            // base::Cost cost = opt_->combineCosts(stateCostPath(nmotion, motion), stateHeuristicCostPath(motion));//opt_->combineCosts(nmotion->rootToStateCost_, incCost);
-            base::Cost cost = stateCostPath(nmotion, motion);//opt_->combineCosts(nmotion->rootToStateCost_, incCost);
-            cost = opt_->combineCosts(cost, ob::Cost(10. / motion->probability_));
+            // base::Cost cost = opt_->combineCosts(stateCostPath(nmotion, motion), stateHeuristicCostPath(motion));
+            base::Cost cost = stateCostPath(nmotion, motion);
+            // cost = ob::Cost( cost.value() / motion->probability_);
             Witness *closestWitness = findClosestWitness(motion);
 
-            if (closestWitness->rep_ == motion || opt_->isCostBetterThan(cost, closestWitness->rep_->accCost_))
+            if (cost.value() >= 0 && (closestWitness->rep_ == motion || opt_->isCostBetterThan(cost, closestWitness->rep_->accCost_)))
             {
                 Motion *oldRep = closestWitness->rep_;
                 motion->accCost_ = cost;
@@ -436,8 +439,8 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                 motion->parent_ = nmotion;
                 nmotion->numChildren_++;
                 motion->nodesFromRoot_ = nmotion->nodesFromRoot_ + 1;
-                if (motion->probability_ < min_probability_) // track minimum quality
-                    min_probability_ = motion->probability_;
+                // if (motion->probability_ < min_probability_) // track minimum quality
+                //     min_probability_ = motion->probability_;
                 
                 closestWitness->linkRep(motion);
 
@@ -463,6 +466,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
                     prevSolutionCost_ = solution->accCost_;
 
                     OMPL_INFORM("Found solution with cost %.2f and (probability, quality) <%.2f, %.2f>", solution->accCost_.value(), solution->probability_, solution->quality_);
+                    TC << std::chrono::duration<double>(Clock::now() - sT).count() << " " << solution->accCost_.value() << " " << solution->probability_ << endl;
                     sufficientlyShort = opt_->isSatisfied(solution->accCost_);
                     if (sufficientlyShort)
                     {
@@ -556,6 +560,8 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
     cout << "DTW time:       " << T_dtw << " sec.\n";
     cout << "DTW_H time:     " << T_dtwH << " sec.\n";    
     cout << "-------------------------------------------\n";
+
+    TC.close();
 
     OMPL_INFORM("%s: Created %u states in %u iterations", getName().c_str(), nn_->size(), iterations);
 

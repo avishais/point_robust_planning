@@ -38,6 +38,21 @@
         "utility": "cpp",
         "*.ipp": "cpp",
         "iostream": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "valarray": "cpp",
+        "strstream": "cpp",
+        "complex": "cpp",
+        "deque": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "fstream": "cpp",
+        "iomanip": "cpp",
+        "istream": "cpp",
+        "numeric": "cpp",
+        "sstream": "cpp",
+        "streambuf": "cpp",
+        "cinttypes": "cpp",
+        "typeindex": "cpp"
     }
 }

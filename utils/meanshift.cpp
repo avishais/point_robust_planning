@@ -116,22 +116,22 @@ cluster MeanShift::meanshift(Matrix points, double r, double eps) {
     eps_sqr = eps * eps;
     R_sqr = r * r;
 
-    Vector x = meanshift(points);
-    Matrix M = naiveNN_radius(x, points);
+    // Vector x = meanshift(points);
+    // Matrix M = naiveNN_radius(x, points);
 
-    cluster C;
-    C.init(M[0].size(), M.size());
-    C.points = M;
-    C.centroid = mean(C.points);
-    C.stddev = stddev(C.points, C.centroid);
-
-    // Vector m = mean(points);
-    // Matrix M = naiveNN_radius(m, points);
     // cluster C;
     // C.init(M[0].size(), M.size());
     // C.points = M;
-    // C.centroid = m;
+    // C.centroid = mean(C.points);
     // C.stddev = stddev(C.points, C.centroid);
+
+    Vector m = mean(points);
+    Matrix M = naiveNN_radius(m, points);
+    cluster C;
+    C.init(M[0].size(), M.size());
+    C.points = M;
+    C.centroid = m;
+    C.stddev = stddev(C.points, C.centroid);
 
     return C;
 }

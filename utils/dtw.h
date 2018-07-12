@@ -34,17 +34,20 @@ public:
 	~DTW() {};
 
 	double dtwDist( Matrix, Matrix );
-	double dtwDist( Matrix ) const;
-	double dtwToGo( Vector );
+	double dtwDist( Matrix, bool = false ) const;
+	double FakeDTW( Matrix t ) const;
+	double dtwToGo( Matrix );
 	void getOptPath(Matrix, Matrix, Matrix);
 	Matrix oversampling(Matrix) const;
 	int trim(Vector) const;
 
 	void setReferencePath(Matrix r) {
 		r_ = oversampling(r);
+		N_ = r_.size();
 	}
 
 	Matrix r_; // Reference path to be used if set
+	int N_; // Size of r_
 
 private:
 	double dl_;

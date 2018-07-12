@@ -132,16 +132,20 @@ double DTW::dtwDist( Matrix r, Matrix t ) {
 
 
 // To be used with the reference path of the class
-double DTW::dtwDist( Matrix t ) const {
+double DTW::dtwDist( Matrix t, bool over) const {
 
 	int M = trim(t.back()) + 1;//r_.size();
 
-	Matrix t_os = oversampling(t);
+	Matrix t_os;
+	if (over)
+		t_os = t;
+	else
+		t_os = oversampling(t);
 
 	// Heuristic to fast drop longer paths
 	if (t_os.size() > 2*M)
 		return 1.0e6;
-		
+
 	int N = t_os.size();
 
 	Matrix d;
@@ -167,30 +171,79 @@ double DTW::dtwDist( Matrix t ) const {
 	return D[M-1][N-1];
 }
 
+// To be used with the reference path of the class
+double DTW::FakeDTW( Matrix t_os ) const {
 
-double DTW::dtwToGo( Vector s ) {
+	int M = t_os.size();
 
-	int j = trim(s);
+	// if (M > N)
+	// 	return dtwDist(t_os, true);
 
-	double sum = 0;
-	int k = 0;
-	for (int i = j; i < r_.size(); i++) {
-		double l2 = norm(r_[i], s);
-		sum += l2 - dl_*k;
-		double gamma = dl_/l2;
-		for (int a = 0; a < s.size(); a++)
-			s[a] += gamma * (r_[i][a]-s[a]);
-		k++;
+	double D;
+	for (int i = 0; i < std::min(M, N_); i++)
+		D += normSq(r_[i], t_os[i]);
+
+	if (M > N_) {
+		D += (M-N_)*dl_ + normSq(r_.back(), t_os.back());
+		// for (int i = M - N; i < M; i++)
+		// 	D += normSq(r_.back(), t_os[i]);
 	}
+
+	return D;
+}
+
+
+double DTW::dtwToGo( Matrix t_os ) {
+
+	int M = t_os.size();
+	double sum = 0;
+
+	if (M < N_) {
+		Vector s = t_os.back();
+		for (int i = M; i < r_.size(); i++) {
+			double l2 = norm(r_[i], s);
+			sum += l2;
+			double gamma = dl_/l2;
+			for (int a = 0; a < s.size(); a++)
+				s[a] += gamma * (r_[i][a]-s[a]);
+		}
+	}
+
+	if (M > N_) {
+		Vector s = r_.back();
+		for (int i = N_; i < t_os.size(); i++) {
+			double l2 = norm(t_os[i], s);
+			sum += l2;
+			double gamma = dl_/l2;
+			for (int a = 0; a < s.size(); a++)
+				s[a] += gamma * (t_os[i][a]-s[a]);
+		}
+	}
+
+
+
+	// int j = trim(s);
+
+	// double sum = 0;
+	// int k = 0;
+	// for (int i = j; i < r_.size(); i++) {
+	// 	double l2 = norm(r_[i], s);
+	// 	sum += 0.5*l2 - dl_*k;
+	// 	double gamma = dl_/l2;
+	// 	for (int a = 0; a < s.size(); a++)
+	// 		s[a] += gamma * (r_[i][a]-s[a]);
+	// 	k++;
+	// }
+
+	// double sum = norm(r_.back(), s);
 
 	return sum;
 }
 
-
 // Return the index of the closest point on the r_ path to point t
 int DTW::trim(Vector t) const {
 
-	int i_min, Min = 1e6;
+	int i_min = 0, Min = 1e6;
 	for (int i = 0; i < r_.size(); i++) {
 		double d = normSq(r_[i], t);
 		if (d < Min) {
@@ -201,7 +254,6 @@ int DTW::trim(Vector t) const {
 
 	return i_min;
 }
-
 
 // int main() {
 // 	Matrix s1 = {{0, 0},{1, 1},{3, 1.5},{3, 1.5},{8, 1.5},{10, 1.5},{12, 0}};
