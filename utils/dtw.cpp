@@ -203,22 +203,24 @@ double DTW::dtwToGo( Matrix t_os ) {
 	if (M < N_) {
 		Vector s = t_os.back();
 		for (int i = M; i < r_.size(); i++) {
-			double l2 = norm(r_[i], s);
+			double l2 = normSq(r_[i], s);
 			sum += l2;
-			double gamma = dl_/l2;
+			double gamma = dl_/sqrt(l2);
 			for (int a = 0; a < s.size(); a++)
 				s[a] += gamma * (r_[i][a]-s[a]);
 		}
+		// sum *= 0.5;
 	}
 
 	if (CostMode==4 && M > N_) {
-		Vector s = r_.back();
+		double d = norm(t_os.back(), r_.back());
 		for (int i = N_; i < t_os.size(); i++) {
-			double l2 = norm(t_os[i], s);
-			sum += l2;
-			double gamma = dl_/l2;
-			for (int a = 0; a < s.size(); a++)
-				s[a] += gamma * (t_os[i][a]-s[a]);
+			sum += pow(d-(i-N_)*dl_, 2);
+			// double l2 = normSq(t_os[i], s);
+			// sum += l2;
+			// double gamma = dl_/sqrt(l2);
+			// for (int a = 0; a < s.size(); a++)
+			// 	s[a] += gamma * (t_os[i][a]-s[a]);
 		}
 	}
 

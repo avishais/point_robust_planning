@@ -154,8 +154,8 @@ void plan_C::plan(Matrix ref_path, double runtime, plannerType ptype, double max
 		std::cout << "Found solution:" << std::endl;
 		solved_bool = true;
 
-		// system("cd simulator && ./viz & cd .. &");
-		// system("python plotCost.py");
+		system("cd simulator && ./viz & cd .. &");
+		system("python plotCost.py");
 
 	}
 	else {
@@ -214,22 +214,23 @@ int main(int argn, char ** args) {
 
 	Matrix ref_path = {{-8, -7}, {-8, 0}, {-0.5, 6}, {7, 7}};
 
-	// Plan.plan(ref_path, runtime, ptype, 0.5);
+	CostMode = 4;
+	Plan.plan(ref_path, runtime, ptype, 0.5);
 
-	for (int i = 0; i < 20; i++) {
-		for (int j = 1; j < 5; j++) {
-			CostMode = j;
+	// for (int i = 0; i < 100; i++) {
+	// 	for (int j = 1; j < 5; j++) {
+	// 		CostMode = j;
 
-			std::ofstream TC;
-			TC.open("./path/cost.txt", ios::out | ios::app);
-			TC << -CostMode << endl;
-			TC.close();
+	// 		std::ofstream TC;
+	// 		TC.open("./path/cost.txt", ios::out | ios::app);
+	// 		TC << -CostMode << endl;
+	// 		TC.close();
 
-			Plan.plan(ref_path, runtime, ptype, 0.5);
+	// 		Plan.plan(ref_path, runtime, ptype, 0.5);
 
-		}
+	// 	}
 
-	}
+	// }
 
 	std::cout << std::endl << std::endl;
 

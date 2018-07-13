@@ -442,8 +442,8 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
     unsigned iterations = 0;
 
     auto sT = Clock::now();
-    std::ofstream TC;
-	TC.open("./path/cost.txt", ios::out | ios::app);
+    // std::ofstream TC;
+	// TC.open("./path/cost.txt", ios::out | ios::app);
     while (ptc == false)
     {
         /* sample random state (with goal biasing) */
@@ -463,7 +463,8 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
         {
             // base::Cost cost = opt_->combineCosts(stateCostPath(nmotion, motion), stateHeuristicCostPath(motion));
             base::Cost cost = stateCostPath(nmotion, motion);
-            cost = ob::Cost( cost.value() / motion->probability_);
+            // cost = ob::Cost( cost.value() / motion->probability_);
+            cost = ob::Cost( cost.value() * motion->probability_ + 1000*(1-motion->probability_));
             Witness *closestWitness = findClosestWitness(motion);
 
             if (cost.value() >= 0 && (closestWitness->rep_ == motion || opt_->isCostBetterThan(cost, closestWitness->rep_->accCost_)))
@@ -502,7 +503,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
 
                     OMPL_INFORM("Found solution with cost %.2f and (probability, quality) <%.2f, %.2f>", solution->accCost_.value(), solution->probability_, solution->quality_);
                     
-                    TC << iterations << " " << std::chrono::duration<double>(Clock::now() - sT).count() << " " << CostBM(solution) << " " << solution->accCost_.value() << " " << solution->probability_ << endl;
+                    // TC << iterations << " " << std::chrono::duration<double>(Clock::now() - sT).count() << " " << CostBM(solution) << " " << solution->accCost_.value() << " " << solution->probability_ << endl;
                     
                     sufficientlyShort = opt_->isSatisfied(solution->accCost_);
                     if (sufficientlyShort)
@@ -598,7 +599,7 @@ ompl::base::PlannerStatus ompl::geometric::SST::solve(const base::PlannerTermina
     cout << "DTW_H time:     " << T_dtwH << " sec.\n";    
     cout << "-------------------------------------------\n";
 
-    TC.close();
+    // TC.close();
 
     OMPL_INFORM("%s: Created %u states in %u iterations", getName().c_str(), nn_->size(), iterations);
 
